@@ -1,6 +1,7 @@
 // Conventional Commits 规则（SPEC §9）：type(scope): subject
 // 允许的 type 与 dsh 插件/领域分层对应
-module.exports = {
+// 注意：wagoid/commitlint-github-action 要求 .mjs（ESM）扩展名
+export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [
