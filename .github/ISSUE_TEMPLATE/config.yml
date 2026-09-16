@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 项目路线图
+    url: https://github.com/Kuriyama9590/CANNAgent/blob/main/docs/ROADMAP.md
+    about: 阶段划分、技术决策与待讨论清单
+  - name: 开发看板
+    url: https://github.com/users/Kuriyama9590/projects/1
+    about: 任务实时跟踪（Backlog / Ready / In progress / In review / Done）
