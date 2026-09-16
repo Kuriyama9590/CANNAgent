@@ -1,0 +1,32 @@
+# CannAgent 项目忽略规则
+
+# 密钥与环境（永不入库）
+.env
+.env.*
+!.env.example
+环境.txt
+*.credentials.yaml
+
+# 运行时现场与产物
+workspace/
+web-demo/node_modules/
+web-demo/dist/
+**/__pycache__/
+*.pyc
+.venv/
+dist/
+node_modules/
+coverage/
+*.log
+
+# dsh 本地数据
+.dsh/
+
+# IDE / 系统
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# ZCode 本地配置
+.zcode/
