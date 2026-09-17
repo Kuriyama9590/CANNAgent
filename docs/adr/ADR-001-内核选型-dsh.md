@@ -32,7 +32,7 @@ CannAgent 需要让 agent 在昇腾服务器上**无人值守**跑完七阶段�
 
 | 方案 | 优势 | 劣势 | 结论 |
 |---|---|---|---|
-| **dsh**（选用） | harness/loop/compaction/插件全内置；三协议原生；session-log 取证 | developer preview，承诺 breaking changes；核心仓不接受外部贡献；CLI 仍在演进 | 采用；风险用版本锁定 + 插件回归测试对冲（D1 已放弃适配层缓冲） |
+| **dsh**（选用） | harness/loop/compaction/插件全内置；三协议原生；session-log 取证 | developer preview，承诺 breaking changes；核心仓不接受外部贡献；CLI 仍在演进 | 采用；风险用月度升级 + 插件回归测试对冲（D1 已放弃适配层缓冲；D7 不钉版本） |
 | OpenHands | 平台型最完整、Python、SWE-bench 强 | 架构重、改造受上游耦合、多协议端点不如 dsh 原生 | **未采用**（D1 已放弃退出路径，此行仅存调研记录） |
 | Goose (Block) | 25+ provider、MCP 生态好 | 定位交互式助手，无人值守批量弱 | 排除 |
 | OpenCode | 终端 agent、任意 provider | 面向交互式内循环，服务器常驻编排弱 | 排除 |
@@ -41,7 +41,7 @@ CannAgent 需要让 agent 在昇腾服务器上**无人值守**跑完七阶段�
 
 ## 后果与风险对冲
 
-1. **breaking changes（developer preview）**：锁定 dsh 版本；**每月检查一次 release，无新版不更新**；升级必须走 ADR + 插件回归测试基线（→ D7）
+1. **breaking changes（developer preview）**：**每月检查一次 release，有新版即升级**（不钉版本）；升级必须走 ADR + 插件回归测试基线——D1 已放弃适配层，这是唯一防线（→ D7）
 2. **headless/CLI 形态仍在演进**：C1 spike 第一周验证无人值守形态可用性；不可用则评估 dsh 以服务形态 + session API 驱动
 3. **不接受外部代码贡献**：我们的插件全部放在自有仓库（`plugins/dsh-cann-*`），不向上游提 PR
 4. **无退出路径（D1 的已知代价）**：放弃内核可替换性——不建适配层、不保留 OpenHands 接入预案。若 dsh 演进到不可接受（许可变更、关键能力移除、长期停更），代价是插件层重写；`python/cannagent` 领域层与 `web/` 前端不受影响

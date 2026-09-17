@@ -6,7 +6,7 @@
 
 - 状态基线：2026-09-15 规划讨论收敛
 - 本地开发环境备忘（2026-09-17，dsh 装本地以支持"agent 任意环境可运行"——D9）：
-  - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.1`（D7 锁版本：每月检查 release、有新版才升级）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
+  - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.2`（D7：**每月检查一次 release，有新版即升级**——不钉版本，升级走 ADR + 插件回归测试基线）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
   - **模型端点**：`$DSH_HOME/settings.yaml` 的 `llm-deepseek.baseURL` 指向网关 `https://www.dmxapi.cn/v1`（OpenAI 兼容协议；provider 仍为内置 `deepseek-official`），默认模型 `deepseek-v4-flash`（reasoningEffort max）
   - **凭据**：`$DSH_HOME/.credentials.yaml` 的 `DEEPSEEK_API_KEY`（仓库侧镜像到 `.env`，已被 .gitignore 忽略；旧值备份在同目录 `.credentials.yaml.bak-20260917`）
   - 网关可用模型 582 个（含 `deepseek-v4-flash` / `deepseek-v4-pro` / `deepseek-v3.1` / `glm-5` / `claude-opus-4-7` 等），为 C9 三协议端点配置提供候选
@@ -60,7 +60,7 @@
 | 前端栈 | React + Vite + TypeScript + Ant Design v5 + ECharts | 明暗双主题（AntD 主题算法）；布局经 demo 评审定稿 |
 | 前端交互 | 轨迹=阶段管道图+下钻；实时=直播+可回放；主题=明暗可切换 | 已确认；整体布局通过 demo 逐项 grill 定稿 |
 | RAG 起步栈 | SQLite + sqlite-vec + BGE-M3（接口抽象，后续可换 Qdrant/Milvus） | 服务器零依赖部署 |
-| 风险缓解 | 锁死 dsh（无适配层）+ 每月检查 release、有新版才升级（走 ADR + 插件回归测试基线） | dsh 处于 developer preview，有 breaking changes；升级风险由回归测试兜底（D1/D7 拍板 2026-09-17） |
+| 风险缓解 | 锁死 dsh 不留后路（D1：无适配层）+ 每月检查 release、有新版即升级（D7，升级走 ADR + 插件回归测试基线） | dsh 处于 developer preview，有 breaking changes；D1 放弃适配层后回归测试是唯一防线 |
 | 部署拓扑 | **agent 与测试环境解耦**：agent 任意环境可运行，以任务包形式下发昇腾服务器执行测试、结果包回传（D9 拍板 2026-09-17） | 开发/CI 与 NPU 资源解耦；任务包可审计、可重放 |
 | NPU 调度 | 持久化队列：一个 run 独占一张卡，可用卡数可配置（D6 拍板 2026-09-17） | 重启不丢任务，符合无人值守 batch/CI |
 | 权限沙箱 | workspace/runs 目录隔离 + dsh hooks 命令白名单 + CANN 环境变量固定，不引入容器（D8 拍板 2026-09-17） | 第一版够用；容器级隔离留作后续加固 |
