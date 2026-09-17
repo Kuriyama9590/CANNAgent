@@ -1,9 +1,0 @@
-version: 2
-updates:
-  - package-ecosystem: npm
-    directory: /web-demo
-    schedule:
-      interval: monthly
-    labels: [type/ci]
-    commit-message:
-      prefix: build
