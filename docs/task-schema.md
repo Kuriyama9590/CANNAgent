@@ -26,8 +26,9 @@ task_type: model
 task_name: resnet50 算子融合优化
 model:
   path: input/resnet50_bs16.onnx        # 相对 run 目录
-  format: onnx                          # onnx | torchscript | pdparams
-  input_shape: [16, 3, 224, 224]
+  format: onnx                          # v1 仅支持 onnx（见下方"输入格式"）
+  opset: 13                             # ≥ 13（CANN 9.0 支持范围，加载时校验）
+  input_shape: [16, 3, 224, 224]        # 必须静态固化；动态轴 v1 不支持
 constraints:
   dtype: fp16
   exclude_ops: []                       # 跳过的算子类型
@@ -39,6 +40,17 @@ budgets: {}                             # 见 1.5
 ```
 
 **语义**：agent 自主解析模型 → 识别算子与融合机会 → 按 `max_fusion_count` 拆解出算子任务队列，逐个走七阶段；`target.gain_pct` 为每个算子任务的目标。
+
+**输入格式（identify 的消费契约）**：identify 读取的是**计算图**（算子类型 / 属性 / 拓扑 / shape），不是权重文件。因此：
+
+| 格式 | v1 定位 | 理由 |
+|---|---|---|
+| ONNX（`.onnx`） | **唯一支持** | 图结构自包含，`onnx` 包可枚举 node/initializer；与 CANN 工具链（ATC / aclnn）算子语义一致 |
+| torchscript（`.pt`） | 不支持 | 图在 torch 内部 IR 中，解析脆弱；落地 CANN 前仍需转 ONNX，多一跳无收益 |
+| pdparams | 不支持 | Paddle 生态，与参考模型（resnet50 / swinv2）无关 |
+| `.pth` / safetensors 等**纯权重格式** | **排除**（ schema 层拒收） | 只含张量、不含图，identify 无法从中读出算子清单；角色是 verify/bench 的附加权重，放 `input/weights/`（专用 schema 字段后续版本再定） |
+
+PyTorch 用户导出指引：`torch.onnx.export(model, dummy_input, path, opset_version=13, do_constant_folding=True)`，batch 维固定不使用动态轴。
 
 ### 1.3 单算子规格任务（`task_type: operator`）
 

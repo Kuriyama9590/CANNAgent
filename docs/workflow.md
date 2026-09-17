@@ -18,7 +18,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 
 | 阶段 | 输入 | 输出 | 允许的工具 | 完成判定 |
 |---|---|---|---|---|
-| identify | 模型文件 / 算子规格 | `identify/*.json` | parse_model, op_profile, fusion_scan, retrieve | 算子清单+融合候选落盘 |
+| identify | ONNX 模型（格式约束见 task-schema §1.2：仅 `.onnx`、opset ≥ 13、静态 shape）/ 算子规格 yaml | `identify/*.json` | parse_model, op_profile, fusion_scan, retrieve | 算子清单+融合候选落盘 |
 | strategy | 融合候选 + RAG 检索 | `strategy/STRATEGY.md` + strategy.json | retrieve, strategy_gen | 策略文档落盘且通过 schema 校验 |
 | implement | 策略 | `implement/vN/` 完整快照 | code_gen, patch_code, build, analyze_error | 编译通过（build 成功） |
 | verify | 编译产物 | `verify/accuracy_vN.json` | gen_test, run_test, analyze_accuracy | 精度达标（≤阈值且全用例通过） |
