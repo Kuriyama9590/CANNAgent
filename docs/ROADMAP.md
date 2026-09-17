@@ -103,7 +103,7 @@ cann-neo/
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **进行中** |
+| ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **已完成**（2026-09-17 逐项 grill 评审通过，布局定稿 = 仪表盘 + 下钻三栏 + 会话直播视图，见 D11） |
 | ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **进行中**：B1/B2/B3/B6/B8 已完成；B4/B5/B7 阻塞于 D1/D3/D4/D5 |
 | ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | 待启动 |
 | ④ 测试与部署 | tests/ + golden 回归集 + README 部署说明 | 待启动 |
@@ -115,4 +115,4 @@ cann-neo/
 - [ ] 权限与沙箱边界：agent 可执行命令白名单、编译测试隔离策略
 - [ ] 部署拓扑：dsh / python / web / NPU 服务器的进程与网络布局
 - [ ] CI 细节：golden 回归集的准入标准、报告卡点
-- [ ] 前端布局定稿（demo 评审后回填本文件）
+- [x] 前端布局定稿（demo 评审后回填本文件）→ 2026-09-17 评审通过，定稿见 §2 与 D11
