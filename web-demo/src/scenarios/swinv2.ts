@@ -147,7 +147,7 @@ const raw: RawEvent[] = [
     stage: 'verify',
     kind: 'tool_completed',
     title: '生成测试用例',
-    detail: '基线：官方实现逐算子调用（关闭 ATC 自动融合）',
+    detail: '基线：官方实现逐算子调用（aclnn 单算子，无 ATC 图融合）',
     tool: { name: 'gen_test', input: { cases: 'random ×48 + window 边界 ×12' }, output: { cases: 60 } },
   },
   {
@@ -215,7 +215,7 @@ const raw: RawEvent[] = [
       title: '精度报告 · v2',
       data: {
         用例: 'random ×48 + window 边界 ×12',
-        基线: 'CANN 官方实现（关闭 ATC 自动融合）',
+        基线: 'CANN 官方实现（aclnn 单算子 + ATC 门槛）',
         max_rel_err: '8e-7',
         通过: '60 / 60',
         迭代记录: [
@@ -239,8 +239,8 @@ const raw: RawEvent[] = [
     stage: 'bench',
     kind: 'tool_completed',
     title: '基准环境确认',
-    detail: '官方基线单算子 API 调用（关闭 ATC 自动融合），预热 20 / 迭代 100',
-    tool: { name: 'bench_setup', input: { baseline: 'CANN 官方实现（--disable_fusion）' }, output: { ready: true } },
+    detail: '官方基线走 aclnn 单算子 API（无 ATC 图融合），预热 20 / 迭代 100；另测 ATC 门槛对照',
+    tool: { name: 'bench_setup', input: { baseline: 'CANN 官方实现（aclnn 单算子）+ ATC 门槛对照' }, output: { ready: true } },
   },
   {
     tsMin: 27.5,
@@ -260,7 +260,7 @@ const raw: RawEvent[] = [
       tab: 'bench',
       title: '性能对比：窗口注意力融合 v2 vs 官方基线',
       data: {
-        baselineName: '官方实现（关闭 ATC 融合）',
+        baselineName: '官方实现（aclnn 单算子）',
         optimizedName: 'SW-MHA 融合 v2',
         unit: 'ms',
         baseline: { p50: 0.97, p99: 1.18 },
@@ -318,7 +318,7 @@ const raw: RawEvent[] = [
       title: '交付清单',
       data: {
         'code/': 'sw_mha_v2 算子源码 + host 侧调用 + CMake 脚本',
-        'tests/': '60 个精度用例 + 基准脚本（关闭 ATC 融合）',
+        'tests/': '60 个精度用例 + 基准脚本（aclnn 基线 + ATC 门槛）',
         'STRATEGY.md': '优化策略文档（方案#1）',
         'REPORT.md': '精度 + 性能报告',
         'experience/exp-0133.json': '经验回流条目',
