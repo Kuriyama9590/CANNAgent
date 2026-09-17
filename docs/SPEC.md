@@ -47,11 +47,11 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 
 ## 6. 基准与精度
 
-- 基线方法学（aclnn 单算子基线 + **有效性判据：＞ATC 或 ATC 未覆盖**（含 ATC 优化清单采集）、统一口径）：`docs/benchmark.md`（D4 已拍板 2026-09-17，待 B4 发布；过渡期按 task-schema.md §1.4 执行）
+- 基线方法学（aclnn 单算子基线 + **有效性判据：＞ATC 或 ATC 未覆盖**（含 ATC 优化清单采集）、统一口径）：`docs/benchmark.md`（B4 已发布 2026-09-17；与 workflow.md §2.1 bench 段分工：本文件口径权威、彼处接入点权威）
 
 ## 7. RAG 与经验库
 
-- 规范：`docs/rag.md`（D5 已拍板 2026-09-17：schema 校验 + 人工抽检 + 经验库人工增删查改；待 B7 发布）；经验条目 schema 已在 demo 剧本中体现雏形
+- 规范：`docs/rag.md`（B7 已发布 2026-09-17；D5：schema 校验 + 人工抽检 + 经验库人工增删查改；经验条目完整 schema 以 rag.md 为权威）
 - 职责分工：skills = 静态方法论；RAG = 动态经验 + CANN 文档
 
 ## 8. 前端
