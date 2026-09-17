@@ -39,6 +39,7 @@ npm run dev      # http://localhost:5173
 | [observability](docs/observability.md) | 事件流契约（events.jsonl，append-only） |
 | [task-schema](docs/task-schema.md) | 任务输入 schema 与 run 目录规范 |
 | [ADR-001](docs/adr/ADR-001-内核选型-dsh.md) | 内核选型：dsh |
+| [C1 spike 报告](docs/spikes/C1-dsh-headless-spike.md) | dsh headless / Python SDK 运行形态验证（阶段③ 关键路径第一环） |
 
 ## 开发流程
 
@@ -51,4 +52,4 @@ npm run dev      # http://localhost:5173
 
 - **阶段① 前端 Demo：已完成**（2026-09-17 布局与交互评审通过，定稿见 [ROADMAP](docs/ROADMAP.md) §2）
 - **阶段② 规范文档：进行中**——SPEC / workflow / observability / task-schema / ADR-001 已发布（B1/B2/B3/B6/B8）；benchmark.md（B4）、plugin-dev.md（B5）、rag.md（B7）待写，其依赖决策 D1、D3–D10 已拍板
-- **阶段③ 完整骨架：待启动**——C1（dsh headless）/ C2（插件事件拦截）spike 为关键路径第一环；dsh 已装于本地开发机并验证单轮 headless 任务
+- **阶段③ 完整骨架：进行中**——C1（dsh headless 运行 spike）已完成（[报告](docs/spikes/C1-dsh-headless-spike.md)，2026-09-17）：headless/批处理/SDK 常驻形态全通过，Python SDK 为推荐主形态；C2（插件事件拦截）依赖解除，为下一关键路径

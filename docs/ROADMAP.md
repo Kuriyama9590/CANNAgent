@@ -8,6 +8,7 @@
 - 任务跟踪：issue 与[开发看板](https://github.com/users/Kuriyama9590/projects/1)（`docs/CannAgent-TODO.xlsx` 为迁移前的历史存档，不再更新）
 - 本地开发环境备忘（2026-09-17，dsh 装本地以支持"agent 任意环境可运行"——D9）：
   - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.2`（D7：**每月检查一次 release，有新版即升级**——不钉版本，升级走 ADR + 插件回归测试基线）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
+  - **Python SDK**：`deepseek-harness-sdk 0.1.5rc1`（含 `deepseek-harness-runtime-bin` 同版本单文件 exe）已装；⚠️ PyPI 有抢注包 `deepseek-harness`（无关三方客户端）——官方包名必须 `deepseek-harness-sdk`，本机镜像索引可能需 `--index-url https://pypi.org/simple/`；SDK 不隐式读 `~/.dsh`，需显式 `DSH_HOME`；npm 与 pip 双通道版本需同步盯（D7），详见 [C1 spike 报告](spikes/C1-dsh-headless-spike.md) F2/F4
   - **模型端点**：`$DSH_HOME/settings.yaml` 的 `llm-deepseek.baseURL` 指向网关 `https://www.dmxapi.cn/v1`（OpenAI 兼容协议；provider 仍为内置 `deepseek-official`），默认模型 `deepseek-v4-flash`（reasoningEffort max）
   - **凭据**：`$DSH_HOME/.credentials.yaml` 的 `DEEPSEEK_API_KEY`（仓库侧镜像到 `.env`，已被 .gitignore 忽略；旧值备份在同目录 `.credentials.yaml.bak-20260917`）
   - 网关可用模型 582 个（含 `deepseek-v4-flash` / `deepseek-v4-pro` / `deepseek-v3.1` / `glm-5` / `claude-opus-4-7` 等），为 C9 三协议端点配置提供候选
@@ -125,7 +126,7 @@ cann-neo/
 |---|---|---|
 | ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **已完成**（2026-09-17 逐项 grill 评审通过，布局定稿 = 仪表盘 + 下钻三栏 + 会话直播视图，见 D11） |
 | ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **进行中**：B6/B8 已归档关闭；B1/B2/B3 文档已发布并入主干（SPEC / task-schema / observability，issue 待用户评审判定归档）；B4/B5/B7 已随 D1/D3/D4/D5 拍板解除阻塞（2026-09-17） |
-| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | 待启动 |
+| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | **进行中**：C1 spike 完成（2026-09-17，[报告](spikes/C1-dsh-headless-spike.md)——headless/批处理/SDK 常驻形态全通过；跨进程 session 恢复不可用 → 检查点恢复走 run 目录重注入；拦截点已定位）；C2 依赖解除可启动 |
 | ④ 测试与部署 | tests/ + golden 回归集 + README 部署说明 | 待启动 |
 
 ## 7. 待讨论清单
