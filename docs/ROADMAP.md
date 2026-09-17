@@ -5,7 +5,14 @@
 > 本文档是规划讨论的落盘快照，作为后续规范与骨架开发的基准，随讨论持续更新。
 
 - 状态基线：2026-09-15 规划讨论收敛
-- 远程环境备忘：`10.14.3.87:/root/Blarock/Project/CannAgent`（CANN 9.0.0，venv `cannagent`，参考模型 resnet50 / swinv2，历史结果"比官方 +5%"）
+- 远程环境备忘（2026-09-17 实测核实，`ssh root@10.14.3.87`，凭据见 `环境.txt`，待 E5 #33 迁出至 `.env`）：
+  - 主机：openEuler 24.03 LTS-SP3 / 80 核 / 502GB 内存 / 806GB 可用盘
+  - NPU：**2 张 910B**（`/dev/davinci1`、`/dev/davinci4`，各 32GB HBM，IT21PDXC01，探查时均空闲）→ D6 并发度上限 2
+  - CANN：9.0.0（`/usr/local/Ascend/cann` → `cann-9.0.0`），驱动/固件 26.0.rc1；`atc` 已在 PATH
+  - Python：conda 环境 `cannagent`（Python 3.13.9；torch 2.12.0 / numpy 2.4.6 / onnx 1.22.0 / onnxruntime 1.27.0 / pydantic 2.13.4 / qdrant-client 1.18.0；**未安装 torch_npu**）；node v24.16 + pnpm 已装
+  - dsh 内核**尚未安装**；旧项目内留有可复用原型——`CannAgent/dsh-cannagent/`（dsh 插件包：cordis.patch.yml + skills/cann-fusion）与 `CannAgentRemote/`（runner / tasks / deploy_manifests，任务包模式雏形）→ 作为 C3/C5/D9 参考
+  - 旧项目产物 `/root/Blarock/Project/CannAgent`：`build/`（编译与 ATC 边界脚本群）、`reports/工作进展报告-ATC边界外算子优化-20260907.html`（分项收益含 +15.24% / +1.85% 等，待细读核对）、`models/`（单算子 ONNX 集：gelu_silu / matmul_add / mylenet 等）
+  - 参考模型：resnet50.onnx 见于 `OperatorAgent/models/` 与 `GraphAgent/`；swinv2 未在 maxdepth 4 内找到
 
 ---
 
