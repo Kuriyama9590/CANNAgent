@@ -27,6 +27,8 @@
   "detail": "max_rel_err 3.1e-2，阈值 1e-3，失败 9/80 例",
   "severity": "error",                // info|success|warning|error（缺省 info）
   "iteration": "v1",                  // 迭代标签（可选）
+  "sessionId": "s-implement-v2",      // 可选：dsh 会话归属（session_* 与 tool_* 事件携带）
+                                       // 前端"会话直播"视图按此分组渲染思考/输出/工具调用
 
   "tool": {                           // 可选：工具调用边界
     "name": "run_test",
@@ -34,7 +36,8 @@
     "output": { },                    // 结构化结果摘要（大对象截断规则见 §5）
     "duration_ms": 64000
   },
-  "artifact": { "tab": "accuracy", "title": "精度报告 · v1", "data": { } }
+  "artifact": { "tab": "accuracy", "title": "精度报告 · v1", "data": { } },
+  "message": { "part": "thinking", "content": "…" }  // 可选：模型消息增量（kind=session_message 必填）
 }
 ```
 
@@ -43,7 +46,9 @@
 | kind | 触发点 | 语义约束 |
 |---|---|---|
 | `stage_started` / `stage_completed` / `stage_failed` | 状态机转移（workflow.md） | 每阶段 started 恰好一次；completed/failed 二选一终结 |
-| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（适配层统一发出 | started/completed 按 `tool.invocation_id` 配对（长工具才有 started；快工具可只发终态） |
+| `session_started` / `session_ended` | dsh 会话边界（loop 插件开/收 session） | 携带 `sessionId`；started 的 title 标会话角色（如 `implement 会话 · v2`、`routing 判定会话`）；ended 说明收尾原因（完成 / token 满滚转 / 异常） |
+| `session_message` | 模型消息增量（思考流 / 文本输出） | 携带 `sessionId` 与 `message.part`（thinking\|text）；按 flush 窗口合并（≤500ms 或 ≤2KB 一条），超长截断同 §5；前端"会话直播"视图的唯一消息来源 |
+| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（适配层统一发出 | started/completed 按 `tool.invocation_id` 配对（长工具才有 started；快工具可只发终态）；建议携带 `sessionId` 以便会话视图内联展示 |
 | `iteration_started` | implement/verify 新迭代 | `iteration` 必填（v1/v2/…） |
 | `decision` | agent 关键决策（选融合模式/达标判定） | detail 必填理由 |
 | `checkpoint` | 状态机落盘检查点 | detail 带检查点文件相对路径 |
