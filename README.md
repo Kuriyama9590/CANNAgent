@@ -49,4 +49,6 @@ npm run dev      # http://localhost:5173
 
 ## 状态
 
-阶段② 规范文档进行中（B 系列见看板）；阶段③ 完整骨架待启动（C1/C2 spike 为关键路径第一环）。
+- **阶段① 前端 Demo：已完成**（2026-09-17 布局与交互评审通过，定稿见 [ROADMAP](docs/ROADMAP.md) §2）
+- **阶段② 规范文档：进行中**——SPEC / workflow / observability / task-schema / ADR-001 已发布（B1/B2/B3/B6/B8）；benchmark.md（B4）、plugin-dev.md（B5）、rag.md（B7）待写，其依赖决策 D1、D3–D10 已拍板
+- **阶段③ 完整骨架：待启动**——C1（dsh headless）/ C2（插件事件拦截）spike 为关键路径第一环；dsh 已装于本地开发机并验证单轮 headless 任务

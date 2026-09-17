@@ -20,7 +20,7 @@
 
 - docs/ 是单一事实源：行为或接口变更必须同步对应规范
 - 冲突时的权威顺序：状态机 = `workflow.md`；输入 schema = `task-schema.md`；事件流 = `observability.md`；总纲 = `SPEC.md`
-- 规范文档的修订也走 PR（由用户处理）
+- 规范文档的修订同样走 PR（由代理按需创建与合并，见 §2）
 
 ## 4. 安全
 
