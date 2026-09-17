@@ -35,7 +35,7 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 ## 4. 任务与状态机
 
 - 双输入 schema 与 run 目录规范：`docs/task-schema.md`
-- 七阶段状态机/预算/检查点/降级：`docs/workflow.md`（状态机由插件强制，不靠 prompt）
+- 七阶段状态机/预算/检查点/降级：`docs/workflow.md`（转移边集/完成判定/预算/降级由插件强制；失败分流由 routing 判定会话在边集内决策，不写死规则）
 
 ## 5. 可观测性
 

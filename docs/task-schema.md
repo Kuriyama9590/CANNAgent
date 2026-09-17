@@ -26,8 +26,9 @@ task_type: model
 task_name: resnet50 算子融合优化
 model:
   path: input/resnet50_bs16.onnx        # 相对 run 目录
-  format: onnx                          # onnx | torchscript | pdparams
-  input_shape: [16, 3, 224, 224]
+  format: onnx                          # v1 仅支持 onnx（见下方"输入格式"）
+  opset: 13                             # ≥ 13（CANN 9.0 支持范围，加载时校验）
+  input_shape: [16, 3, 224, 224]        # 必须静态固化；动态轴 v1 不支持
 constraints:
   dtype: fp16
   exclude_ops: []                       # 跳过的算子类型
@@ -39,6 +40,17 @@ budgets: {}                             # 见 1.5
 ```
 
 **语义**：agent 自主解析模型 → 识别算子与融合机会 → 按 `max_fusion_count` 拆解出算子任务队列，逐个走七阶段；`target.gain_pct` 为每个算子任务的目标。
+
+**输入格式（identify 的消费契约）**：identify 读取的是**计算图**（算子类型 / 属性 / 拓扑 / shape），不是权重文件。因此：
+
+| 格式 | v1 定位 | 理由 |
+|---|---|---|
+| ONNX（`.onnx`） | **唯一支持** | 图结构自包含，`onnx` 包可枚举 node/initializer；与 CANN 工具链（ATC / aclnn）算子语义一致 |
+| torchscript（`.pt`） | 不支持 | 图在 torch 内部 IR 中，解析脆弱；落地 CANN 前仍需转 ONNX，多一跳无收益 |
+| pdparams | 不支持 | Paddle 生态，与参考模型（resnet50 / swinv2）无关 |
+| `.pth` / safetensors 等**纯权重格式** | **排除**（ schema 层拒收） | 只含张量、不含图，identify 无法从中读出算子清单；角色是 verify/bench 的附加权重，放 `input/weights/`（专用 schema 字段后续版本再定） |
+
+PyTorch 用户导出指引：`torch.onnx.export(model, dummy_input, path, opset_version=13, do_constant_folding=True)`，batch 维固定不使用动态轴。
 
 ### 1.3 单算子规格任务（`task_type: operator`）
 
@@ -68,16 +80,14 @@ budgets: {}
 | `atc` | `disabled` | 显式关闭自动融合的选项名（写入 bench 日志，报告可审计） |
 | `metric` | `{warmup: 20, iters: 100, stats: [p50, p99]}` | 统一口径 |
 
-### 1.5 预算（`budgets`，缺省值）
+### 1.5 预算（`budgets`，缺省值；2026-09-17 修订）
 
 | 字段 | 缺省 | 含义 |
 |---|---|---|
-| `max_wall_min` | 90 | 单任务墙钟上限（分钟） |
-| `max_tokens` | 200_000 | 单任务 token 上限 |
-| `max_iterations.verify` | 3 | 精度/测试阶段最大迭代 |
-| `max_iterations.implement` | 3 | 编码阶段最大编译失败重试 |
+| `max_wall_min` | 90 | 整 run 墙钟上限（分钟），**唯一硬性终止条件**（超限→降级） |
+| `max_tokens` | 1_000_000 | **单 session** token 上限（session 内累计消耗口径）；满额即收尾该 session 并新开续跑，不终止 run |
 
-超限语义见 workflow.md §4（降级）。
+**无次数上限**（2026-09-17 用户拍板）：不设 `max_iterations`——implement 编译失败重试、verify 迭代、回 strategy 重规划均不限次，持续优化直至达标或墙钟耗尽。超限语义见 workflow.md §3/§4。
 
 ## 2. run 目录规范
 
