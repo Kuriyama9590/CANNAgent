@@ -165,8 +165,8 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 
 #### bench
 
-- **输入**：通过精度判定的 `implement/vN/artifacts` + task.yaml `baseline` 段（`impl`：aclnn/torch_npu；`metric` 口径）
-- **输出**：`bench/bench_v{N}_baseline.json` 与 `bench/bench_v{N}_optimized.json`（双份，结构相同）
+- **输入**：通过精度判定的 `implement/vN/artifacts` + task.yaml `baseline` 段（`impl`：aclnn/torch_npu；`metric` 口径）+ ATC 门槛对照（`atc: enabled`，D4）
+- **输出**：`bench/bench_v{N}_baseline.json` 与 `bench/bench_v{N}_optimized.json`（双份，结构相同；ATC 对照结果另存 `bench_v{N}_atc.json`，结构同）
   ```jsonc
   { "schema_version": "1.0",
     "version": "v2",                        // 对应 implement/vN 的迭代号
@@ -177,10 +177,11 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
     "mean_us": 419.7,                       // 均值（仅报告参考）
     "sync": "aclrtSynchronizeStream",       // 同步点（口径可审计）
     "device": "Ascend910B",                 // 测量设备型号（必填，报告引用）
-    "note": "关闭 ATC 自动融合" }            // 口径备注（写入交付报告）
+    "note": "aclnn 基线（无 ATC 融合）+ ATC 门槛对照" } // 口径备注（写入交付报告）
   ```
 - **gain 口径**：`gain_pct = (baseline.p50_us − optimized.p50_us) / baseline.p50_us × 100`（判死用 p50；p99 仅供报告参考）
-- **校验点**：双份文件齐全；`iters` 与配置一致；`device` 必填（可审计）
+- **ATC 有效性门槛（D4 拍板 2026-09-17）**：`optimized.p50_us` 须强于启用 ATC 自动优化的对照结果（`bench_v{N}_atc.json`），否则本迭代判为**无效优化**（不进入交付）；两种口径差异写入交付报告
+- **校验点**：双份文件齐全（ATC 门槛启用时三份）；`iters` 与配置一致；`device` 必填（可审计）
 
 #### summarize
 

@@ -1,24 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Badge,
   Button,
-  Card,
-  Col,
   Input,
   Modal,
   Popconfirm,
   Radio,
-  Row,
-  Space,
-  Statistic,
-  Tag,
-  Tooltip,
   Typography,
 } from 'antd';
 import {
   PlusOutlined,
   RedoOutlined,
-  RightOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 import { useSim } from '../engine/store';
@@ -35,27 +26,34 @@ const STATUS_META: Record<RunStatus, { color: string; text: string }> = {
   aborted: { color: 'error', text: '已终止' },
 };
 
+const STATUS_DOT: Record<RunStatus, string> = {
+  running: '#06b6d4',
+  completed: '#52c41a',
+  degraded: '#faad14',
+  aborted: '#ff4d4f',
+};
+
 const SEG_COLOR: Record<string, string> = {
   completed: '#52c41a',
-  running: '#1677ff',
+  running: '#06b6d4',
   failed: '#ff4d4f',
   degraded: '#faad14',
-  pending: 'rgba(128,138,157,0.28)',
+  pending: 'rgba(128,138,157,0.24)',
 };
 
 const StageBar: React.FC<{ segs: { status: string }[] }> = ({ segs }) => (
-  <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
+  <div style={{ display: 'flex', gap: 3, marginTop: 8 }}>
     {segs.map((s, i) => (
-      <Tooltip key={i} title={STAGES[i].label} placement="top">
-        <div
-          style={{
-            flex: 1,
-            height: 6,
-            borderRadius: 3,
-            background: SEG_COLOR[s.status] ?? SEG_COLOR.pending,
-          }}
-        />
-      </Tooltip>
+      <div
+        key={i}
+        title={STAGES[i].label}
+        style={{
+          flex: 1,
+          height: 4,
+          borderRadius: 2,
+          background: SEG_COLOR[s.status] ?? SEG_COLOR.pending,
+        }}
+      />
     ))}
   </div>
 );
@@ -81,6 +79,13 @@ const Dashboard: React.FC = () => {
   const gains = derivedList.filter((x) => x.d.status === 'completed' && x.d.gainPct !== undefined).map((x) => x.d.gainPct!);
   const avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / gains.length : null;
 
+  const stats: { label: string; value: string; color?: string }[] = [
+    { label: '运行中', value: String(running), color: running > 0 ? '#06b6d4' : undefined },
+    { label: '已完成', value: String(completed), color: completed > 0 ? '#52c41a' : undefined },
+    { label: '降级 / 终止', value: String(degraded), color: degraded > 0 ? '#faad14' : undefined },
+    { label: '平均提升（已完成）', value: avgGain === null ? '—' : pct(avgGain), color: avgGain === null ? undefined : '#52c41a' },
+  ];
+
   return (
     <div>
       <div
@@ -88,148 +93,153 @@ const Dashboard: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 14,
+          marginBottom: 10,
         }}
       >
-        <Typography.Title level={4} style={{ margin: 0 }}>
+        <Typography.Title level={4} style={{ margin: 0, fontWeight: 600 }}>
           任务总览
         </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>
+        <Button type="primary" ghost icon={<PlusOutlined />} onClick={() => setOpen(true)}>
           新建模拟任务
         </Button>
       </div>
 
-      <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
-        <Col xs={12} md={6}>
-          <Card size="small">
-            <Statistic
-              title="运行中"
-              value={running}
-              prefix={running > 0 ? <Badge status="processing" /> : undefined}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card size="small">
-            <Statistic title="已完成" value={completed} valueStyle={{ color: completed > 0 ? '#52c41a' : undefined }} />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card size="small">
-            <Statistic title="已降级 / 终止" value={degraded} valueStyle={{ color: degraded > 0 ? '#faad14' : undefined }} />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card size="small">
-            <Statistic
-              title="平均提升（已完成）"
-              value={avgGain === null ? '—' : pct(avgGain)}
-              valueStyle={{ color: avgGain === null ? undefined : '#52c41a' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="stat-strip">
+        {stats.map((s) => (
+          <div key={s.label} className="stat-item">
+            <div className="stat-value" style={s.color ? { color: s.color } : undefined}>
+              {s.value}
+            </div>
+            <div className="stat-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
-      <Row gutter={[12, 12]}>
+      <div className="run-list">
         {derivedList.map(({ run, d }) => {
           const meta = STATUS_META[d.status];
           const currentLabel = d.currentStage
             ? STAGES.find((s) => s.key === d.currentStage)?.label
             : null;
+          const sub =
+            run.meta.taskType === 'model' ? '整网模型' : '单算子规格';
           return (
-            <Col xs={24} sm={12} lg={8} key={run.id}>
-              <Card
-                size="small"
-                hoverable
-                onClick={() => nav(`#/run/${run.id}`)}
-                title={
-                  <Space>
-                    <span style={{ fontSize: 14 }}>{run.meta.name}</span>
-                    <Tag color={meta.color}>{meta.text}</Tag>
-                  </Space>
-                }
-                extra={
-                  d.gainPct !== undefined ? (
-                    <Typography.Text strong style={{ color: '#52c41a' }}>
-                      {pct(d.gainPct)}
-                    </Typography.Text>
-                  ) : (
-                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                      {d.status === 'running' && currentLabel ? `进行中 · ${currentLabel}` : d.status === 'degraded' ? '等待人工介入' : '—'}
-                    </Typography.Text>
-                  )
-                }
-                actions={[
-                  <Space key="ops" split={<span style={{ opacity: 0.3 }}>/</span>}>
+            <div
+              key={run.id}
+              className="run-row"
+              onClick={() => nav(`#/run/${run.id}`)}
+            >
+              <div className="run-accent" style={{ background: STATUS_DOT[d.status] }} />
+              <div style={{ flex: 1, minWidth: 0, padding: '13px 18px 13px 14px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 10,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Typography.Text strong style={{ fontSize: 14 }}>
+                    {run.meta.name}
+                  </Typography.Text>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: STATUS_DOT[d.status],
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: STATUS_DOT[d.status],
+                        display: 'inline-block',
+                      }}
+                    />
+                    {meta.text}
+                  </span>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {sub} · {run.meta.model ?? run.meta.operator ?? ''}
+                    {run.meta.shapeNote ? ` · ${run.meta.shapeNote}` : ''}
+                  </Typography.Text>
+                </div>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  开始于 {run.meta.startTimeLabel} · 阶段进度 {d.completedCount}/7
+                  {run.meta.targetGainPct !== undefined
+                    ? ` · 目标 +${run.meta.targetGainPct}%`
+                    : ''}
+                  {d.status === 'degraded' ? ' · 等待人工介入' : ''}
+                </Typography.Text>
+                <StageBar segs={d.stages.map((s) => ({ status: s.status }))} />
+              </div>
+              <div
+                style={{
+                  flexShrink: 0,
+                  textAlign: 'right',
+                  padding: '0 16px 0 10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: 6,
+                }}
+              >
+                {d.gainPct !== undefined ? (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 20, fontWeight: 650, color: '#52c41a' }}
+                  >
+                    {pct(d.gainPct)}
+                  </span>
+                ) : (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 12, opacity: 0.6 }}
+                  >
+                    {d.status === 'running' && currentLabel
+                      ? `→ ${currentLabel}`
+                      : d.status === 'running'
+                        ? '· · ·'
+                        : '—'}
+                  </span>
+                )}
+                <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
+                  {(d.status === 'running' || d.status === 'degraded') && (
+                    <Popconfirm
+                      title="终止该任务？"
+                      description="终止后保留现场"
+                      okText="终止"
+                      cancelText="取消"
+                      onConfirm={() => terminate(run.id)}
+                      onCancel={(e) => e?.stopPropagation()}
+                    >
+                      <Button size="small" type="text" danger icon={<StopOutlined />}>
+                        终止
+                      </Button>
+                    </Popconfirm>
+                  )}
+                  {(d.status === 'degraded' || d.status === 'aborted') && (
                     <Button
                       size="small"
-                      type="link"
-                      icon={<RightOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      type="text"
+                      icon={<RedoOutlined />}
+                      onClick={() => {
+                        restart(run.id);
                         nav(`#/run/${run.id}`);
                       }}
                     >
-                      查看
+                      重试
                     </Button>
-                    {(d.status === 'running' || d.status === 'degraded') && (
-                      <Popconfirm
-                        title="终止该任务？"
-                        description="终止后保留现场"
-                        okText="终止"
-                        cancelText="取消"
-                        onConfirm={(e) => {
-                          e?.stopPropagation();
-                          terminate(run.id);
-                        }}
-                        onCancel={(e) => e?.stopPropagation()}
-                      >
-                        <Button
-                          size="small"
-                          type="text"
-                          danger
-                          icon={<StopOutlined />}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          终止
-                        </Button>
-                      </Popconfirm>
-                    )}
-                    {(d.status === 'degraded' || d.status === 'aborted') && (
-                      <Button
-                        size="small"
-                        type="text"
-                        icon={<RedoOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          restart(run.id);
-                          nav(`#/run/${run.id}`);
-                        }}
-                      >
-                        重试
-                      </Button>
-                    )}
-                  </Space>,
-                ]}
-              >
-                <Space size={6} wrap style={{ marginBottom: 6 }}>
-                  <Tag>{run.meta.taskType === 'model' ? '整网模型' : '单算子规格'}</Tag>
-                  {run.meta.model && <Tag color="blue">{run.meta.model}</Tag>}
-                  {run.meta.operator && <Tag color="blue">{run.meta.operator}</Tag>}
-                  {run.meta.targetGainPct !== undefined && (
-                    <Tag color="green">{`目标 +${run.meta.targetGainPct}%`}</Tag>
                   )}
-                </Space>
-                <div style={{ fontSize: 12, opacity: 0.65, marginBottom: 2 }}>
-                  开始于 {run.meta.startTimeLabel} · 阶段进度 {d.completedCount}/7
-                  {run.meta.shapeNote ? ` · ${run.meta.shapeNote}` : ''}
                 </div>
-                <StageBar segs={d.stages.map((s) => ({ status: s.status }))} />
-              </Card>
-            </Col>
+              </div>
+            </div>
           );
         })}
-      </Row>
+      </div>
 
       <Modal
         title="新建模拟任务"
@@ -252,7 +262,7 @@ const Dashboard: React.FC = () => {
           {[
             { id: 'run-resnet50', name: '整网模型 · resnet50', desc: 'Conv2D+BN+ReLU 融合全流程（3 轮迭代，+6.2% 达标交付）' },
             { id: 'run-swinv2', name: '整网模型 · swinv2', desc: 'SW-MHA 窗口注意力融合（2 轮迭代，+5.1%）' },
-            { id: 'run-conv3x3', name: '单算子规格 · Conv3x3+BN+ReLU', desc: '小尺寸融合连续编译失败 → 降级等待人工' },
+            { id: 'run-conv3x3', name: '单算子规格 · Conv3x3+BN+ReLU', desc: '编译反复失败 → routing 判定换路线 → 墙钟耗尽降级（演示判定会话）' },
           ].map((t) => (
             <Radio key={t.id} value={t.id}>
               <div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import {
   CheckCircleFilled,
   ClockCircleOutlined,
@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import type { Stage } from '../types';
 import { STAGES } from '../types';
+import { ACCENT } from '../theme';
 import type { StageState } from '../engine/derive';
 
 export type StageFilter = Stage | 'all';
@@ -55,15 +56,18 @@ const StagePipeline: React.FC<Props> = ({ stages, selected, onSelect, titles }) 
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            padding: '5px 12px',
+            padding: '4px 10px',
             borderRadius: 6,
             cursor: 'pointer',
-            border: `1px solid ${selected === 'all' ? '#1677ff' : 'rgba(128,138,157,0.35)'}`,
-            background: selected === 'all' ? 'rgba(22,119,255,0.1)' : 'transparent',
+            fontSize: 12.5,
+            fontWeight: selected === 'all' ? 600 : 400,
+            color: selected === 'all' ? ACCENT : undefined,
+            background:
+              selected === 'all' ? 'rgba(6,182,212,0.13)' : 'rgba(127,127,127,0.06)',
           }}
         >
-          <MinusCircleOutlined />
-          <span style={{ fontSize: 13 }}>全部</span>
+          <MinusCircleOutlined style={{ fontSize: 11 }} />
+          <span>全部</span>
         </div>
       </Tooltip>
       <span className="pipe-arrow">❯</span>
@@ -92,25 +96,35 @@ const StagePipeline: React.FC<Props> = ({ stages, selected, onSelect, titles }) 
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '5px 12px',
+                  padding: '4px 10px',
                   borderRadius: 6,
                   cursor: 'pointer',
-                  border: `1px solid ${active ? '#1677ff' : 'rgba(128,138,157,0.35)'}`,
+                  fontSize: 12.5,
+                  fontWeight: active ? 600 : 400,
+                  color: active
+                    ? ACCENT
+                    : status === 'pending'
+                      ? 'rgba(148,163,184,0.75)'
+                      : undefined,
                   background: active
-                    ? 'rgba(22,119,255,0.1)'
+                    ? 'rgba(6,182,212,0.13)'
                     : status === 'running'
-                      ? 'rgba(22,119,255,0.06)'
+                      ? 'rgba(6,182,212,0.07)'
                       : 'transparent',
+                  boxShadow: active ? `inset 0 -2px 0 ${ACCENT}` : undefined,
                 }}
               >
                 <span className={status === 'running' ? 'pulse' : undefined} style={{ borderRadius: '50%', display: 'inline-flex' }}>
                   <StageIcon status={status} />
                 </span>
-                <span style={{ fontSize: 13 }}>{label}</span>
+                <span>{label}</span>
                 {iters > 1 && (
-                  <Tag style={{ marginInlineEnd: 0, fontSize: 11, lineHeight: '16px' }}>
-                    {iters}次
-                  </Tag>
+                  <span
+                    className="mono"
+                    style={{ fontSize: 10.5, opacity: 0.62, fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    ×{iters}
+                  </span>
                 )}
               </div>
             </Tooltip>

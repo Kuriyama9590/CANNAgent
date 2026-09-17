@@ -3,16 +3,19 @@ import { Button, Empty, Tag, Typography } from 'antd';
 import {
   BulbOutlined,
   CheckCircleFilled,
+  CommentOutlined,
   ExclamationCircleFilled,
   FlagOutlined,
   InfoCircleOutlined,
   PlayCircleOutlined,
+  RobotOutlined,
   StopOutlined,
   SyncOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
 import type { AgentEvent, EventKind } from '../types';
 import { wallClock } from '../util/format';
+import { ACCENT } from '../theme';
 
 interface Props {
   events: AgentEvent[];
@@ -35,13 +38,17 @@ const KIND_META: Record<
   checkpoint: { icon: <FlagOutlined />, label: '检查点' },
   degrade: { icon: <ExclamationCircleFilled />, label: '降级' },
   note: { icon: <InfoCircleOutlined />, label: '备注' },
+  // 会话流事件在"会话直播"视图渲染（RunDetail 过滤），此处仅保证 Record 完整
+  session_started: { icon: <RobotOutlined />, label: '会话' },
+  session_message: { icon: <CommentOutlined />, label: '消息' },
+  session_ended: { icon: <RobotOutlined />, label: '会话' },
 };
 
 const SEV_COLOR: Record<string, string> = {
   success: '#52c41a',
   error: '#ff4d4f',
   warning: '#faad14',
-  info: '#1677ff',
+  info: ACCENT,
 };
 
 const EventItem: React.FC<{
@@ -61,7 +68,17 @@ const EventItem: React.FC<{
         onClick={hasBody ? onToggle : undefined}
         style={{ cursor: hasBody ? 'pointer' : 'default' }}
       >
-        <span className="mono" style={{ fontSize: 11, opacity: 0.65, marginRight: 8 }}>
+        <span
+          className="mono"
+          style={{
+            fontSize: 11,
+            opacity: 0.62,
+            marginRight: 10,
+            display: 'inline-block',
+            minWidth: 56,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
           {wallClock(startTimeLabel, e.ts)}
         </span>
         <span style={{ color, fontSize: 12, marginRight: 6 }}>{meta.icon}</span>
@@ -79,7 +96,7 @@ const EventItem: React.FC<{
         </Typography.Text>
       </div>
       {e.detail && (
-        <div style={{ fontSize: 12, opacity: 0.78, marginTop: 2, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, opacity: 0.82, marginTop: 2, lineHeight: 1.5 }}>
           {e.detail}
         </div>
       )}
@@ -146,13 +163,13 @@ const TraceTimeline: React.FC<Props> = ({ events, startTimeLabel, onOpenArtifact
         return (
           <div
             key={e.id}
+            className="tl-row"
             style={{
               display: 'flex',
               gap: 10,
               padding: '7px 6px',
               borderRadius: 6,
-              borderLeft: `3px solid ${isStage ? (sev === 'success' ? '#52c41a' : '#1677ff') : (SEV_COLOR[sev] ?? 'rgba(128,138,157,0.5)')}`,
-              background: isStage ? 'rgba(22,119,255,0.05)' : 'transparent',
+              borderLeft: `3px solid ${isStage ? (sev === 'success' ? '#52c41a' : ACCENT) : (SEV_COLOR[sev] ?? 'rgba(128,138,157,0.5)')}`,
               marginBottom: 4,
             }}
           >

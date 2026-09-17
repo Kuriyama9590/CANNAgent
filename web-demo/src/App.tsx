@@ -4,14 +4,13 @@ import {
   ConfigProvider,
   Layout,
   Switch,
-  Tag,
   Typography,
   theme as antdTheme,
 } from 'antd';
 import { MoonFilled, SunFilled } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 import { SimProvider } from './engine/store';
-import { ThemeCtx } from './theme';
+import { ThemeCtx, ACCENT } from './theme';
 import Dashboard from './pages/Dashboard';
 import RunDetail from './pages/RunDetail';
 
@@ -47,38 +46,76 @@ const Shell: React.FC = () => {
       locale={zhCN}
       theme={{
         algorithm: dark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        token: { borderRadius: 7 },
+        token: {
+          borderRadius: 6,
+          colorPrimary: ACCENT,
+          colorInfo: ACCENT,
+          ...(dark
+            ? {
+                colorBgBase: '#0b0e13',
+                colorBgContainer: '#12161d',
+                colorBgElevated: '#171c25',
+                colorBorderSecondary: 'rgba(148,163,184,0.14)',
+                colorTextSecondary: '#a8b3c4',
+                colorTextTertiary: '#8593a6',
+              }
+            : {}),
+        },
       }}
     >
       <ThemeCtx.Provider value={dark}>
         <AntdApp>
-          <Layout style={{ minHeight: '100%' }}>
+          <Layout
+            style={{
+              minHeight: '100%',
+              color: dark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.88)',
+            }}
+          >
             <Layout.Header
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
-                padding: '0 20px',
-                height: 56,
-                lineHeight: '56px',
-                borderBottom: '1px solid rgba(128,138,157,0.2)',
+                gap: 14,
+                padding: '0 22px',
+                height: 52,
+                lineHeight: '52px',
+                background: 'transparent',
+                borderBottom: '1px solid rgba(148,163,184,0.16)',
               }}
             >
-              <span style={{ fontSize: 20 }}>🧠</span>
-              <Typography.Title level={5} style={{ margin: 0 }}>
-                CannAgent 控制台
-              </Typography.Title>
-              <Tag color="geekblue">昇腾算子优化 Agent</Tag>
-              <Tag>模拟演示环境</Tag>
+              <span
+                className="mono"
+                style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}
+              >
+                CannAgent
+              </span>
+              <span style={{ width: 1, height: 14, background: 'rgba(148,163,184,0.32)' }} />
+              <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
+                昇腾算子优化 · 控制台
+              </Typography.Text>
+              <span
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  border: '1px solid rgba(148,163,184,0.35)',
+                  borderRadius: 4,
+                  color: 'rgba(148,163,184,0.85)',
+                  letterSpacing: '0.14em',
+                }}
+              >
+                SIM
+              </span>
               <div style={{ flex: 1 }} />
               <Switch
+                size="small"
                 checkedChildren={<MoonFilled />}
                 unCheckedChildren={<SunFilled />}
                 checked={dark}
                 onChange={toggle}
               />
             </Layout.Header>
-            <Layout.Content style={{ padding: 16, minHeight: 'calc(100vh - 56px)' }}>
+            <Layout.Content style={{ padding: '18px 22px', minHeight: 'calc(100vh - 52px)' }}>
               {route.page === 'dashboard' ? <Dashboard /> : <RunDetail id={route.id} />}
             </Layout.Content>
           </Layout>

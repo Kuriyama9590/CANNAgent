@@ -11,11 +11,14 @@ CannAgent = 昇腾算子优化 agent harness：输入整网模型/单算子规�
 
 ```
 web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) → dsh 内核
+                                                        ↕ 任务包下发 / 结果包回传（D9）
+                                                    昇腾服务器（CANN 工具链 / NPU 执行环境）
 ```
 
 - 依赖只能自上而下；**TS 插件零业务逻辑**（注册/校验/转发/错误码映射）；业务逻辑全在 Python
-- Python 领域模块（identify/strategy/build/verify/bench/deliver/knowledge）**互相禁止 import**，经 cli.py 组合
-- 对 dsh API 的引用收敛在各插件的 `kernel/` 适配层（ADR-001 退出策略的前提）
+- Python 领域模块（identify/strategy/build/verify/bench/deliver/knowledge）**互相禁止互相 import**，经 cli.py 组合
+- dsh API **直连使用，不建适配层、无退出路径**（D1 拍板 2026-09-17，ADR-001 备选方案仅存档）；升级风险由插件回归测试兜底（D7：每月检查 release，有新版才升级）
+- **agent 与测试环境解耦**（D9 拍板 2026-09-17）：agent 任意环境可运行，编译/验证/测量以任务包形式下发昇腾服务器执行、结果包回传；agent 侧不要求与 NPU 同机
 
 ## 2. 模型端点
 
@@ -44,11 +47,11 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 
 ## 6. 基准与精度
 
-- 基线方法学（aclnn 单算子、排除 ATC、统一口径）：`docs/benchmark.md`（待 D4 拍板后发布，此前按 task-schema.md §1.4 默认值执行）
+- 基线方法学（aclnn 单算子基线 + 启用 ATC 的有效性门槛、统一口径）：`docs/benchmark.md`（D4 已拍板 2026-09-17，待 B4 发布；过渡期按 task-schema.md §1.4 执行）
 
 ## 7. RAG 与经验库
 
-- 规范：`docs/rag.md`（待 D5 拍板后发布）；经验条目 schema 已在 demo 剧本中体现雏形
+- 规范：`docs/rag.md`（D5 已拍板 2026-09-17：schema 校验 + 人工抽检 + 经验库人工增删查改；待 B7 发布）；经验条目 schema 已在 demo 剧本中体现雏形
 - 职责分工：skills = 静态方法论；RAG = 动态经验 + CANN 文档
 
 ## 8. 前端
@@ -63,4 +66,4 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 - **TypeScript**：pnpm workspace，eslint + tsc（strict），vitest
 - **Git**：trunk-based，conventional commits（`feat:/fix:/docs:/spec:`），PR 必过 CI
 - **文档**：规范变更走 PR + 对应子文档同步；架构决策记 `docs/adr/`
-- **CI**：eslint+tsc+vitest / ruff+mypy+pytest / web build；golden 准入标准待 D10
+- **CI**：eslint+tsc+vitest / ruff+mypy+pytest / web build；golden 准入（D10 拍板 2026-09-17）：精度硬卡点（max_rel_err ≤ 阈值），性能仅报告不卡点
