@@ -1,7 +1,7 @@
 # ADR-001：内核框架选型 — DeepSeek Harness (dsh)
 
-- 状态：已采纳（默认方案，D1 拍板后升级为最终决策）
-- 日期：2026-09-15
+- 状态：已采纳 · **2026-09-17 修订（D1 拍板：锁死 dsh，取消适配层与退出路径）**
+- 日期：2026-09-15（2026-09-17 修订）
 - 关联决策项：D1（内核形态与后路）、D7（版本锁定与升级）
 - 关联任务：C1 / C2 / C3 / B5
 
@@ -16,7 +16,7 @@ CannAgent 需要让 agent 在昇腾服务器上**无人值守**跑完七阶段�
 
 ## 决策
 
-**采用 DeepSeek Harness（`dsh`）作为 agent 内核**，以 headless 常驻服务形态部署在昇腾服务器；自建 `kernel/` 适配层收敛对 dsh API 的直接引用。
+**采用 DeepSeek Harness（`dsh`）作为 agent 内核**，以 headless 常驻服务形态运行；**插件直连 dsh API，不建 `kernel/` 适配层**（D1 拍板 2026-09-17：接受内核绑定，换取省去一层抽象与双倍维护成本）。
 
 选型依据（2026-09 调研）：
 
@@ -32,8 +32,8 @@ CannAgent 需要让 agent 在昇腾服务器上**无人值守**跑完七阶段�
 
 | 方案 | 优势 | 劣势 | 结论 |
 |---|---|---|---|
-| **dsh**（选用） | harness/loop/compaction/插件全内置；三协议原生；session-log 取证 | developer preview，承诺 breaking changes；核心仓不接受外部贡献；CLI 仍在演进 | 采用，风险用适配层 + 版本锁定对冲 |
-| OpenHands | 平台型最完整、Python、SWE-bench 强 | 架构重、改造受上游耦合、多协议端点不如 dsh 原生 | **指定退出备选**（fallback） |
+| **dsh**（选用） | harness/loop/compaction/插件全内置；三协议原生；session-log 取证 | developer preview，承诺 breaking changes；核心仓不接受外部贡献；CLI 仍在演进 | 采用；风险用版本锁定 + 插件回归测试对冲（D1 已放弃适配层缓冲） |
+| OpenHands | 平台型最完整、Python、SWE-bench 强 | 架构重、改造受上游耦合、多协议端点不如 dsh 原生 | **未采用**（D1 已放弃退出路径，此行仅存调研记录） |
 | Goose (Block) | 25+ provider、MCP 生态好 | 定位交互式助手，无人值守批量弱 | 排除 |
 | OpenCode | 终端 agent、任意 provider | 面向交互式内循环，服务器常驻编排弱 | 排除 |
 | Claude Agent SDK | harness 能力最强 | Anthropic 协议绑定（接国产模型需网关转换）、与"多协议原生"诉求冲突 | 排除（前期调研已否） |
@@ -41,7 +41,7 @@ CannAgent 需要让 agent 在昇腾服务器上**无人值守**跑完七阶段�
 
 ## 后果与风险对冲
 
-1. **breaking changes（developer preview）**：锁定 dsh 版本；所有 dsh API 引用收敛在 `plugins/*/kernel/` 适配层内；升级必须走 ADR + 适配层测试基线（→ D7）
-2. **headless/CLI 形态仍在演进**：C1 spike 第一周验证无人值守形态可用性；不可用则评估 dsh 以服务形态 + session API 驱动，仍不可用则触发退出策略
+1. **breaking changes（developer preview）**：锁定 dsh 版本；**每月检查一次 release，无新版不更新**；升级必须走 ADR + 插件回归测试基线（→ D7）
+2. **headless/CLI 形态仍在演进**：C1 spike 第一周验证无人值守形态可用性；不可用则评估 dsh 以服务形态 + session API 驱动
 3. **不接受外部代码贡献**：我们的插件全部放在自有仓库（`plugins/dsh-cann-*`），不向上游提 PR
-4. **退出策略**：适配层接口保持内核无关（工具注册/事件回调/预算控制三类原语）；若触发退出，OpenHands 按同一接口接入，`python/cannagent` 领域层与 `web/` 前端完全复用，迁移成本限制在适配层
+4. **无退出路径（D1 的已知代价）**：放弃内核可替换性——不建适配层、不保留 OpenHands 接入预案。若 dsh 演进到不可接受（许可变更、关键能力移除、长期停更），代价是插件层重写；`python/cannagent` 领域层与 `web/` 前端不受影响

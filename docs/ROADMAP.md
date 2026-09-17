@@ -49,7 +49,7 @@
 |---|---|---|
 | 内核 | **DeepSeek Harness (`dsh`)** | 224k+ stars、MIT；"一切皆插件"（模型/工具/技能/会话/沙箱/存储/循环/调度均为 Cordis 插件）；session-log 架构原生支持无人值守 batch/CI；**锁死 dsh 不留后路**（D1 拍板 2026-09-17：插件直连 dsh API、不建适配层，备选方案仅存档 ADR-001） |
 | 模型端点 | **三协议原生多兼容**：`anthropic-messages` / `openai-completions` / `openai-responses` + 自定义 baseURL + compat 开关（`supportsDeveloperRole` / `maxTokensField` / `thinkingFormat`） | dsh 内置 providers：DeepSeek / Anthropic / OpenAI / Kimi / zai(GLM)；配置 `settings.yaml` 热生效；凭据 `apiKeyEnv` 引用环境变量 |
-| 语言分层 | TypeScript 写 dsh 插件（薄适配层）+ Python 写领域执行层 + React/TS 写前端 | dsh 插件体系是 TS；CANN 生态是 Python。TS 插件只做注册/校验/转发，业务逻辑全在 Python |
+| 语言分层 | TypeScript 写 dsh 插件（零业务逻辑：注册/校验/转发）+ Python 写领域执行层 + React/TS 写前端 | dsh 插件体系是 TS；CANN 生态是 Python。插件直连 dsh API（D1：无适配层） |
 | 前端栈 | React + Vite + TypeScript + Ant Design v5 + ECharts | 明暗双主题（AntD 主题算法）；布局经 demo 评审定稿 |
 | 前端交互 | 轨迹=阶段管道图+下钻；实时=直播+可回放；主题=明暗可切换 | 已确认；整体布局通过 demo 逐项 grill 定稿 |
 | RAG 起步栈 | SQLite + sqlite-vec + BGE-M3（接口抽象，后续可换 Qdrant/Milvus） | 服务器零依赖部署 |
