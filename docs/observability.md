@@ -48,7 +48,7 @@
 | `stage_started` / `stage_completed` / `stage_failed` | 状态机转移（workflow.md） | 每阶段 started 恰好一次；completed/failed 二选一终结 |
 | `session_started` / `session_ended` | dsh 会话边界（loop 插件开/收 session） | 携带 `sessionId`；started 的 title 标会话角色（如 `implement 会话 · v2`、`routing 判定会话`）；ended 说明收尾原因（完成 / token 满滚转 / 异常） |
 | `session_message` | 模型消息增量（思考流 / 文本输出） | 携带 `sessionId` 与 `message.part`（thinking\|text）；按 flush 窗口合并（≤500ms 或 ≤2KB 一条），超长截断同 §5；前端"会话直播"视图的唯一消息来源 |
-| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（适配层统一发出 | started/completed 按 `tool.invocation_id` 配对（长工具才有 started；快工具可只发终态）；建议携带 `sessionId` 以便会话视图内联展示 |
+| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（tools 插件统一发出） | started/completed 按 `tool.invocation_id` 配对（长工具才有 started；快工具可只发终态）；建议携带 `sessionId` 以便会话视图内联展示 |
 | `iteration_started` | implement/verify 新迭代 | `iteration` 必填（v1/v2/…） |
 | `decision` | agent 关键决策（选融合模式/达标判定） | detail 必填理由 |
 | `checkpoint` | 状态机落盘检查点 | detail 带检查点文件相对路径 |
@@ -73,7 +73,7 @@
 
 ## 5. 写入与消费
 
-- **写入**：`python/cannagent/events.py` 提供唯一写入函数（append + flush + seq 自增，进程内互斥）；dsh 插件经适配层调用，禁止直接写文件
+- **写入**：`python/cannagent/events.py` 提供唯一写入函数（append + flush + seq 自增，进程内互斥）；dsh 插件经工具调用（spawn python CLI，D3）写入，禁止直接写文件
 - **消费**：FastAPI（C7）`GET /api/runs/{id}/events?after_seq=N` 增量拉取；SSE 端点 tail 推送；回放 = `after_seq=0` 全量重读
 - **截断**：`tool.input/output` 序列化后 > 4KB 保留前 4KB + `{"$truncated": true, "full_ref": <run目录内文件>}`
 - **顺序保证**：写入方保证 seq 与文件行序一致；消费方按 seq 排序兜底

@@ -71,13 +71,13 @@ budgets: {}
 
 **语义**：跳过模型解析，identify 阶段仅做规格校验（约秒级），直接进入 strategy。
 
-### 1.4 基线配置（`baseline`，对应 D4）
+### 1.4 基线配置（`baseline`，对应 D4；2026-09-17 拍板）
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
 | `kind` | `official` | `official`（CANN 官方算子库）/ `custom`（任务指定实现） |
-| `impl` | `aclnn` | `aclnn`（单算子 API）或 `torch_npu`；**默认 aclnn**，天然不含 ATC 图融合 |
-| `atc` | `disabled` | 显式关闭自动融合的选项名（写入 bench 日志，报告可审计） |
+| `impl` | `aclnn` | `aclnn`（单算子 API）或 `torch_npu`；**默认 aclnn**，天然不含 ATC 图融合（公平对比口径） |
+| `atc` | `enabled` | **ATC 有效性门槛**（D4 拍板）：另测启用 ATC 自动优化的对照结果，optimized 须强于 ATC 方视为有效，否则判无效优化；口径差异写入交付报告 |
 | `metric` | `{warmup: 20, iters: 100, stats: [p50, p99]}` | 统一口径 |
 
 ### 1.5 预算（`budgets`，缺省值；2026-09-17 修订）
