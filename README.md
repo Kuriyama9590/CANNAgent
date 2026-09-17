@@ -38,6 +38,9 @@ npm run dev      # http://localhost:5173
 | [workflow](docs/workflow.md) | 七阶段任务状态机（预算 / 检查点 / 降级） |
 | [observability](docs/observability.md) | 事件流契约（events.jsonl，append-only） |
 | [task-schema](docs/task-schema.md) | 任务输入 schema 与 run 目录规范 |
+| [benchmark](docs/benchmark.md) | 基线测量方法学（aclnn 基线 / ＞ATC 或未覆盖 / 口径统一） |
+| [plugin-dev](docs/plugin-dev.md) | dsh 插件开发规范（三插件 / 零业务逻辑 / 加载组合） |
+| [rag](docs/rag.md) | RAG 与经验库规范（条目 schema / 回流治理 / 检索契约） |
 | [ADR-001](docs/adr/ADR-001-内核选型-dsh.md) | 内核选型：dsh |
 | [C1 spike 报告](docs/spikes/C1-dsh-headless-spike.md) | dsh headless / Python SDK 运行形态验证（阶段③ 关键路径第一环） |
 
@@ -51,5 +54,5 @@ npm run dev      # http://localhost:5173
 ## 状态
 
 - **阶段① 前端 Demo：已完成**（2026-09-17 布局与交互评审通过，定稿见 [ROADMAP](docs/ROADMAP.md) §2）
-- **阶段② 规范文档：进行中**——SPEC / workflow / observability / task-schema / ADR-001 已发布（B1/B2/B3/B6/B8）；benchmark.md（B4）、plugin-dev.md（B5）、rag.md（B7）待写，其依赖决策 D1、D3–D10 已拍板
+- **阶段② 规范文档：已完成**——SPEC / workflow / observability / task-schema / benchmark / plugin-dev / rag / ADR-001 全部发布（B1–B8；issue 归档由用户评审判定）
 - **阶段③ 完整骨架：进行中**——C1（dsh headless 运行 spike）已完成（[报告](docs/spikes/C1-dsh-headless-spike.md)，2026-09-17）：headless/批处理/SDK 常驻形态全通过，Python SDK 为推荐主形态；C2（插件事件拦截）依赖解除，为下一关键路径
