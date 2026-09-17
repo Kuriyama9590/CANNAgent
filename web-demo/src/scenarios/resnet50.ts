@@ -11,9 +11,30 @@ const raw: RawEvent[] = [
   // ── 阶段 1：识别 ────────────────────────────────────────────
   { tsMin: 0, stage: 'identify', kind: 'stage_started', title: '开始算子识别' },
   {
+    tsMin: 0.05,
+    stage: 'identify',
+    kind: 'session_started',
+    sessionId: 's1-identify',
+    title: 'identify 会话 · 图解析与热点画像',
+    detail: '识别',
+  },
+  {
+    tsMin: 0.2,
+    stage: 'identify',
+    kind: 'session_message',
+    sessionId: 's1-identify',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '先解析 ONNX 图结构与静态 shape，再做算子分布画像——重点看 Conv2D 计算占比和 BN/ReLU 这类逐元素算子的配对关系，它们决定融合收益的上限。',
+    },
+  },
+  {
     tsMin: 0.3,
     stage: 'identify',
     kind: 'tool_completed',
+    sessionId: 's1-identify',
     title: '解析模型文件',
     tool: {
       name: 'parse_model',
@@ -26,6 +47,7 @@ const raw: RawEvent[] = [
     tsMin: 1.2,
     stage: 'identify',
     kind: 'tool_completed',
+    sessionId: 's1-identify',
     title: '算子分布画像',
     tool: {
       name: 'op_profile',
@@ -46,6 +68,7 @@ const raw: RawEvent[] = [
     tsMin: 5,
     stage: 'identify',
     kind: 'tool_completed',
+    sessionId: 's1-identify',
     title: '扫描融合机会',
     tool: {
       name: 'fusion_scan',
@@ -64,6 +87,7 @@ const raw: RawEvent[] = [
     tsMin: 8,
     stage: 'identify',
     kind: 'tool_completed',
+    sessionId: 's1-identify',
     title: '检索知识库确认融合模式',
     tool: {
       name: 'retrieve',
@@ -78,6 +102,13 @@ const raw: RawEvent[] = [
     },
   },
   {
+    tsMin: 8.8,
+    stage: 'identify',
+    kind: 'session_ended',
+    sessionId: 's1-identify',
+    title: 'identify 完成',
+  },
+  {
     tsMin: 9,
     stage: 'identify',
     kind: 'stage_completed',
@@ -88,9 +119,30 @@ const raw: RawEvent[] = [
   // ── 阶段 2：策略 ────────────────────────────────────────────
   { tsMin: 9.1, stage: 'strategy', kind: 'stage_started', title: '开始策略生成' },
   {
+    tsMin: 9.15,
+    stage: 'strategy',
+    kind: 'session_started',
+    sessionId: 's2-strategy',
+    title: 'strategy 会话 · 方案生成',
+    detail: '策略',
+  },
+  {
+    tsMin: 9.3,
+    stage: 'strategy',
+    kind: 'session_message',
+    sessionId: 's2-strategy',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '候选排序：Conv2D+BN+ReLU 融合（16 处、+8~10%）收益最高且模式最成熟——BN 推理态折叠消两次访存，ReLU 进 epilogue。GEMM+Add 只有 1 处，优先级放后。先检索 AscendC 实现先例确认 epilogue 写法。',
+    },
+  },
+  {
     tsMin: 9.5,
     stage: 'strategy',
     kind: 'tool_completed',
+    sessionId: 's2-strategy',
     title: 'RAG 检索融合先例',
     tool: {
       name: 'retrieve',
@@ -115,6 +167,7 @@ const raw: RawEvent[] = [
     tsMin: 13,
     stage: 'strategy',
     kind: 'tool_completed',
+    sessionId: 's2-strategy',
     title: '生成融合方案 #2',
     tool: {
       name: 'strategy_gen',
@@ -158,7 +211,26 @@ const raw: RawEvent[] = [
     stage: 'strategy',
     kind: 'checkpoint',
     title: '检查点：策略定稿',
-    detail: 'token 预算 38k / 200k，迭代预算 3 次',
+    detail: '墙钟余量 75min / 90min · 策略会话 token 累计 38k / 1M（余量充足）',
+  },
+  {
+    tsMin: 18.8,
+    stage: 'strategy',
+    kind: 'session_message',
+    sessionId: 's2-strategy',
+    title: '输出',
+    message: {
+      part: 'text',
+      content:
+        '方案#2 定稿：BN 折叠 + ReLU epilogue + NC1HWC0 布局前移，预期 +8%，主要风险是 fp16 累积精度（对策：中间态升 fp32）。转入编码。',
+    },
+  },
+  {
+    tsMin: 18.9,
+    stage: 'strategy',
+    kind: 'session_ended',
+    sessionId: 's2-strategy',
+    title: 'strategy 完成',
   },
   {
     tsMin: 19,
@@ -171,9 +243,30 @@ const raw: RawEvent[] = [
   // ── 阶段 3：编码 ────────────────────────────────────────────
   { tsMin: 19.1, stage: 'implement', kind: 'stage_started', title: '开始代码编写' },
   {
+    tsMin: 19.15,
+    stage: 'implement',
+    kind: 'session_started',
+    sessionId: 's3-impl-v1',
+    title: 'implement 会话 · v1',
+    detail: '编码',
+  },
+  {
+    tsMin: 19.25,
+    stage: 'implement',
+    kind: 'session_message',
+    sessionId: 's3-impl-v1',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '骨架：host 侧下发折叠后的 w_fused/b_fused（TilingData 携带）→ kernel 内 GEMM 主循环按 M16N16K16 基本块切分 → ReLU 在 Mmad 出口寄存器直接做，不落 UB。布局转换前移到 host。',
+    },
+  },
+  {
     tsMin: 19.4,
     stage: 'implement',
     kind: 'tool_completed',
+    sessionId: 's3-impl-v1',
     title: '生成融合算子 v1 代码',
     tool: {
       name: 'code_gen',
@@ -208,6 +301,7 @@ const raw: RawEvent[] = [
     tsMin: 21,
     stage: 'implement',
     kind: 'tool_failed',
+    sessionId: 's3-impl-v1',
     title: '编译失败：tiling 参数越界',
     severity: 'error',
     detail: 'E104: tiling_N=128 超出 N=64 时 UB 容量约束',
@@ -219,9 +313,22 @@ const raw: RawEvent[] = [
     },
   },
   {
+    tsMin: 21.3,
+    stage: 'implement',
+    kind: 'session_message',
+    sessionId: 's3-impl-v1',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        'E104：GetTilingData 没按 BLOCK 对齐——N=64 时 tiling_N=128 超出 UB。改成对齐取整（ceil 到 BLOCK）并加 UB 上限校验，两行的事。',
+    },
+  },
+  {
     tsMin: 21.5,
     stage: 'implement',
     kind: 'tool_completed',
+    sessionId: 's3-impl-v1',
     title: '定位编译错误',
     tool: {
       name: 'analyze_error',
@@ -236,6 +343,7 @@ const raw: RawEvent[] = [
     tsMin: 22.2,
     stage: 'implement',
     kind: 'tool_completed',
+    sessionId: 's3-impl-v1',
     title: '修复 tiling 计算',
     tool: { name: 'patch_code', input: { file: 'tiling.h', lines_changed: 2 } },
     artifact: {
@@ -259,6 +367,7 @@ const raw: RawEvent[] = [
     tsMin: 23.5,
     stage: 'implement',
     kind: 'tool_completed',
+    sessionId: 's3-impl-v1',
     title: '重新编译通过',
     severity: 'success',
     tool: {
@@ -274,6 +383,13 @@ const raw: RawEvent[] = [
     title: 'v1 编译通过，进入精度验证',
   },
   {
+    tsMin: 26.8,
+    stage: 'implement',
+    kind: 'session_ended',
+    sessionId: 's3-impl-v1',
+    title: 'implement·v1 完成（build 通过）',
+  },
+  {
     tsMin: 27,
     stage: 'implement',
     kind: 'stage_completed',
@@ -283,11 +399,32 @@ const raw: RawEvent[] = [
 
   // ── 阶段 4：测试（迭代 v1→v3）─────────────────────────────
   { tsMin: 27.1, stage: 'verify', kind: 'stage_started', title: '开始测试回归' },
+  {
+    tsMin: 27.15,
+    stage: 'verify',
+    kind: 'session_started',
+    sessionId: 's4-verify',
+    title: 'verify 会话 · v1 精度验证',
+    detail: '测试',
+  },
+  {
+    tsMin: 27.2,
+    stage: 'verify',
+    kind: 'session_message',
+    sessionId: 's4-verify',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '用例设计：random ×64 覆盖常规分布 + boundary ×16 打边界（固定 seed 保证可复现）。基线用官方单算子 API 逐个调用并关闭 ATC 自动融合——否则对比口径会被图优化污染。',
+    },
+  },
   { tsMin: 27.3, stage: 'verify', kind: 'iteration_started', title: '迭代 v1：精度验证', iteration: 'v1' },
   {
     tsMin: 27.5,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's4-verify',
     title: '生成测试用例',
     detail: '基线：官方 Conv2D / BN / ReLU 单算子 API 逐个调用（关闭 ATC 自动融合，排除干扰）',
     tool: {
@@ -300,6 +437,7 @@ const raw: RawEvent[] = [
     tsMin: 29,
     stage: 'verify',
     kind: 'tool_failed',
+    sessionId: 's4-verify',
     title: 'v1 精度超差',
     severity: 'error',
     detail: 'max_rel_err 3.1e-2，阈值 1e-3，失败 9 / 80 例',
@@ -313,6 +451,7 @@ const raw: RawEvent[] = [
     tsMin: 29.6,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's4-verify',
     title: '精度归因分析',
     tool: {
       name: 'analyze_accuracy',
@@ -324,9 +463,78 @@ const raw: RawEvent[] = [
     },
   },
   {
+    tsMin: 29.75,
+    stage: 'verify',
+    kind: 'session_ended',
+    sessionId: 's4-verify',
+    title: 'v1 验证收尾：未达标，进入分叉点',
+  },
+  {
+    tsMin: 29.8,
+    stage: 'verify',
+    kind: 'session_started',
+    sessionId: 'sr1-routing',
+    title: 'routing 判定会话 · 分叉点 #1',
+    detail: '判定',
+  },
+  {
+    tsMin: 29.95,
+    stage: 'verify',
+    kind: 'session_message',
+    sessionId: 'sr1-routing',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        'v1 精度 3.1e-2 远超阈值 1e-3，但归因明确：fp16 累加器在 BN scale 求和时精度溢出（analyze_accuracy 已定位到 Compute 内），属代码层缺陷，且经验库 #exp-0117 有成熟修法（中间态升 fp32）。融合路线本身没有精度天花板信号——判：回 implement 修复，不换路线。',
+    },
+  },
+  {
+    tsMin: 30.1,
+    stage: 'verify',
+    kind: 'tool_completed',
+    sessionId: 'sr1-routing',
+    title: 'route → implement',
+    severity: 'success',
+    tool: {
+      name: 'route',
+      input: { next: 'implement' },
+      output: {
+        next: 'implement',
+        reason: '精度超差根因为代码层（fp16 累积误差），修复路径明确且有先例',
+        evidence: { max_rel_err: '3.1e-2', threshold: '1e-3', err_best: '首败无历史', 分类: '代码层' },
+        confidence: 'high',
+      },
+    },
+  },
+  {
+    tsMin: 30.25,
+    stage: 'verify',
+    kind: 'session_ended',
+    sessionId: 'sr1-routing',
+    title: '判定完成',
+  },
+  {
+    tsMin: 30.35,
+    stage: 'verify',
+    kind: 'decision',
+    title: 'routing 判定 #1 → 回 implement 修复（fp16 累积误差，代码层）',
+    severity: 'warning',
+    detail: 'route(next=implement, confidence=high)；failures 明细 + #exp-0117 修法注入下一 implement 会话',
+  },
+  {
+    tsMin: 30.38,
+    stage: 'verify',
+    kind: 'session_started',
+    sessionId: 's5-iter-v2',
+    title: 'implement 会话 · v2 修复（判定回流）',
+    detail: '编码',
+  },
+  {
     tsMin: 30.4,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's5-iter-v2',
     title: '修复：累加器与中间态升 fp32',
     tool: { name: 'patch_code', input: { file: 'conv_bn_relu_v1.cpp', lines_changed: 6 } },
     artifact: {
@@ -353,6 +561,7 @@ const raw: RawEvent[] = [
     tsMin: 32.3,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's5-iter-v2',
     title: 'v2 编译通过',
     tool: { name: 'build', output: { binary: 'conv_bn_relu_v2.o' }, durationMs: 35_000 },
   },
@@ -360,6 +569,7 @@ const raw: RawEvent[] = [
     tsMin: 34,
     stage: 'verify',
     kind: 'tool_failed',
+    sessionId: 's5-iter-v2',
     title: 'v2 精度仍超差',
     severity: 'warning',
     detail: 'max_rel_err 1.8e-3，阈值 1e-3，失败 2 / 80 例（边界用例）',
@@ -373,6 +583,7 @@ const raw: RawEvent[] = [
     tsMin: 34.7,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's5-iter-v2',
     title: '边界用例归因',
     tool: {
       name: 'analyze_accuracy',
@@ -383,9 +594,78 @@ const raw: RawEvent[] = [
     },
   },
   {
+    tsMin: 34.75,
+    stage: 'verify',
+    kind: 'session_ended',
+    sessionId: 's5-iter-v2',
+    title: 'v2 修复迭代收尾：误差收敛中，进入分叉点',
+  },
+  {
+    tsMin: 34.8,
+    stage: 'verify',
+    kind: 'session_started',
+    sessionId: 'sr2-routing',
+    title: 'routing 判定会话 · 分叉点 #2',
+    detail: '判定',
+  },
+  {
+    tsMin: 34.95,
+    stage: 'verify',
+    kind: 'session_message',
+    sessionId: 'sr2-routing',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '趋势：3.1e-2 → 1.8e-3，一个数量级的收敛；残余 2/80 失败全部是 boundary 用例、归因到 padding 越界读——误差在收敛、根因仍是代码层。err_best 已刷新，没有停滞信号。判：继续 implement 修复。',
+    },
+  },
+  {
+    tsMin: 35.1,
+    stage: 'verify',
+    kind: 'tool_completed',
+    sessionId: 'sr2-routing',
+    title: 'route → implement',
+    severity: 'success',
+    tool: {
+      name: 'route',
+      input: { next: 'implement' },
+      output: {
+        next: 'implement',
+        reason: '误差逐迭代收敛（3.1e-2 → 1.8e-3），残余为边界用例代码层缺陷',
+        evidence: { err_trend: ['3.1e-2', '1.8e-3'], err_best: '1.8e-3', 停滞: false, 分类: '代码层' },
+        confidence: 'high',
+      },
+    },
+  },
+  {
+    tsMin: 35.25,
+    stage: 'verify',
+    kind: 'session_ended',
+    sessionId: 'sr2-routing',
+    title: '判定完成',
+  },
+  {
+    tsMin: 35.35,
+    stage: 'verify',
+    kind: 'decision',
+    title: 'routing 判定 #2 → 回 implement 修复（误差收敛中，不换路线）',
+    severity: 'info',
+    detail: 'route(next=implement, confidence=high)；err_best=1.8e-3 仍高于阈值，趋势正常',
+  },
+  {
+    tsMin: 35.45,
+    stage: 'verify',
+    kind: 'session_started',
+    sessionId: 's6-iter-v3',
+    title: 'implement 会话 · v3 修复（判定回流）',
+    detail: '编码',
+  },
+  {
     tsMin: 35.5,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's6-iter-v3',
     title: '修复：边界掩码读取',
     tool: { name: 'patch_code', input: { file: 'conv_bn_relu_v1.cpp', lines_changed: 4 } },
     artifact: {
@@ -409,6 +689,7 @@ const raw: RawEvent[] = [
     tsMin: 37.3,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's6-iter-v3',
     title: 'v3 编译通过',
     tool: { name: 'build', output: { binary: 'conv_bn_relu_v3.o' }, durationMs: 33_000 },
   },
@@ -416,6 +697,7 @@ const raw: RawEvent[] = [
     tsMin: 39.2,
     stage: 'verify',
     kind: 'tool_completed',
+    sessionId: 's6-iter-v3',
     title: 'v3 精度通过',
     severity: 'success',
     detail: 'max_rel_err 2.4e-6 ≪ 1e-3，80 / 80 用例通过',
@@ -454,6 +736,13 @@ const raw: RawEvent[] = [
     title: '检查点：v3 通过精度门槛',
   },
   {
+    tsMin: 40.7,
+    stage: 'verify',
+    kind: 'session_ended',
+    sessionId: 's6-iter-v3',
+    title: 'v3 达标（80/80，2.4e-6）',
+  },
+  {
     tsMin: 41,
     stage: 'verify',
     kind: 'stage_completed',
@@ -464,9 +753,30 @@ const raw: RawEvent[] = [
   // ── 阶段 5：基准 ────────────────────────────────────────────
   { tsMin: 41.1, stage: 'bench', kind: 'stage_started', title: '开始性能基准' },
   {
+    tsMin: 41.15,
+    stage: 'bench',
+    kind: 'session_started',
+    sessionId: 's7-bench',
+    title: 'bench 会话 · 双份测量',
+    detail: '基准',
+  },
+  {
+    tsMin: 41.2,
+    stage: 'bench',
+    kind: 'session_message',
+    sessionId: 's7-bench',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '口径先钉死：基线走官方单算子 API（关闭 ATC 自动融合），预热 20 / 迭代 100，判死只看 p50，同步点 aclrtSynchronizeStream。双份测量先基线后优化，同卡同频。',
+    },
+  },
+  {
     tsMin: 41.4,
     stage: 'bench',
     kind: 'tool_completed',
+    sessionId: 's7-bench',
     title: '基准环境确认',
     detail: '官方基线以单算子 API 调用运行（关闭 ATC 自动融合），预热 20 次 / 迭代 100 次',
     tool: {
@@ -485,6 +795,7 @@ const raw: RawEvent[] = [
     tsMin: 43,
     stage: 'bench',
     kind: 'tool_completed',
+    sessionId: 's7-bench',
     title: '官方基线测量完成',
     tool: {
       name: 'run_bench',
@@ -496,6 +807,7 @@ const raw: RawEvent[] = [
     tsMin: 45,
     stage: 'bench',
     kind: 'tool_completed',
+    sessionId: 's7-bench',
     title: '融合算子 v3 测量完成：+6.2%',
     severity: 'success',
     tool: {
@@ -525,6 +837,13 @@ const raw: RawEvent[] = [
     severity: 'success',
   },
   {
+    tsMin: 47.8,
+    stage: 'bench',
+    kind: 'session_ended',
+    sessionId: 's7-bench',
+    title: 'bench 完成（+6.2% 达标）',
+  },
+  {
     tsMin: 48,
     stage: 'bench',
     kind: 'stage_completed',
@@ -535,9 +854,30 @@ const raw: RawEvent[] = [
   // ── 阶段 6：总结 ────────────────────────────────────────────
   { tsMin: 48.1, stage: 'summarize', kind: 'stage_started', title: '开始经验总结' },
   {
+    tsMin: 48.15,
+    stage: 'summarize',
+    kind: 'session_started',
+    sessionId: 's8-summarize',
+    title: 'summarize 会话 · 经验回流',
+    detail: '总结',
+  },
+  {
+    tsMin: 48.25,
+    stage: 'summarize',
+    kind: 'session_message',
+    sessionId: 's8-summarize',
+    title: '思考',
+    message: {
+      part: 'thinking',
+      content:
+        '这次 run 值得沉淀的是精度修复链：fp16 累积 → 升 fp32 中间态 → 边界越界 → PAD_ZERO 掩码。复用条件写宽一点：凡是"逐元素融合 + 累加/reduce 语义 + 存在 padding"都该先排查这两类。',
+    },
+  },
+  {
     tsMin: 48.4,
     stage: 'summarize',
     kind: 'tool_completed',
+    sessionId: 's8-summarize',
     title: '经验条目写入知识库',
     detail: '经验编号 #exp-0132，后续任务可经 RAG 检索复用',
     tool: { name: 'experience_write', output: { id: 'exp-0132', status: 'written' } },
@@ -555,6 +895,13 @@ const raw: RawEvent[] = [
     },
   },
   {
+    tsMin: 49.3,
+    stage: 'summarize',
+    kind: 'session_ended',
+    sessionId: 's8-summarize',
+    title: 'summarize 完成',
+  },
+  {
     tsMin: 49.5,
     stage: 'summarize',
     kind: 'stage_completed',
@@ -565,9 +912,18 @@ const raw: RawEvent[] = [
   // ── 阶段 7：交付 ────────────────────────────────────────────
   { tsMin: 49.6, stage: 'deliver', kind: 'stage_started', title: '开始交付打包' },
   {
+    tsMin: 49.7,
+    stage: 'deliver',
+    kind: 'session_started',
+    sessionId: 's9-deliver',
+    title: 'deliver 会话 · 打包与报告',
+    detail: '交付',
+  },
+  {
     tsMin: 50,
     stage: 'deliver',
     kind: 'tool_completed',
+    sessionId: 's9-deliver',
     title: '交付包打包完成',
     tool: { name: 'package', output: { files: 17, size: '312 KB' } },
     artifact: {
@@ -587,6 +943,7 @@ const raw: RawEvent[] = [
     tsMin: 50.6,
     stage: 'deliver',
     kind: 'tool_completed',
+    sessionId: 's9-deliver',
     title: '生成交付报告',
     tool: { name: 'gen_report', output: { file: 'REPORT.md' } },
     artifact: {
@@ -615,6 +972,13 @@ const raw: RawEvent[] = [
         ].join('\n'),
       },
     },
+  },
+  {
+    tsMin: 50.9,
+    stage: 'deliver',
+    kind: 'session_ended',
+    sessionId: 's9-deliver',
+    title: 'deliver 完成',
   },
   {
     tsMin: 51,

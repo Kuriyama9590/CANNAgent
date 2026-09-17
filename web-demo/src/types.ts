@@ -37,7 +37,23 @@ export type EventKind =
   | 'decision'
   | 'checkpoint'
   | 'degrade'
-  | 'note';
+  | 'note'
+  | 'session_started'
+  | 'session_message'
+  | 'session_ended';
+
+/** 会话边界/消息类事件（前端"会话直播"视图消费；与 observability.md §3 同构） */
+export const SESSION_EVENT_KINDS: readonly EventKind[] = [
+  'session_started',
+  'session_message',
+  'session_ended',
+];
+
+/** 模型消息增量：思考流 / 文本输出 */
+export interface SessionMessage {
+  part: 'thinking' | 'text';
+  content: string;
+}
 
 export type ArtifactTab =
   | 'bench'
@@ -106,6 +122,10 @@ export interface AgentEvent {
   severity?: Severity;
   /** 迭代标签，如 v1 / v2 / v3 */
   iteration?: string;
+  /** 会话归属：session_* 与 tool_* 事件均可携带（无 sessionId 的事件不进会话直播视图） */
+  sessionId?: string;
+  /** 模型消息增量（kind=session_message 时必填） */
+  message?: SessionMessage;
   tool?: ToolCall;
   artifact?: Artifact;
 }

@@ -1,45 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { App as AntdApp, Button, Card, Menu, Space, Tag, Typography } from 'antd';
-import {
-  ArrowLeftOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  LoadingOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { App as AntdApp, Button, Segmented, Tag, Typography } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useSim } from '../engine/store';
 import { deriveRun } from '../engine/derive';
 import type { AgentEvent, ArtifactTab, RunStatus, Stage } from '../types';
 import { STAGE_LABEL } from '../types';
 import StagePipeline, { type StageFilter } from '../components/StagePipeline';
 import TraceTimeline from '../components/TraceTimeline';
+import SessionLive from '../components/SessionLive';
 import InspectorPanel from '../components/InspectorPanel';
 import ReplayBar from '../components/ReplayBar';
 import { nav } from '../util/nav';
 import { pct } from '../util/format';
+import { SESSION_EVENT_KINDS } from '../types';
 
 const STATUS_META: Record<RunStatus, { color: string; text: string }> = {
   running: { color: 'processing', text: '运行中' },
   completed: { color: 'success', text: '已完成' },
   degraded: { color: 'warning', text: '已降级' },
   aborted: { color: 'error', text: '已终止' },
-};
-
-const stageMenuIcon = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
-    case 'running':
-      return <LoadingOutlined style={{ color: '#1677ff' }} spin />;
-    case 'failed':
-      return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
-    case 'degraded':
-      return <ExclamationCircleOutlined style={{ color: '#faad14' }} />;
-    default:
-      return <ClockCircleOutlined style={{ opacity: 0.45 }} />;
-  }
 };
 
 const RunDetail: React.FC<{ id: string }> = ({ id }) => {
@@ -55,6 +34,7 @@ const RunDetail: React.FC<{ id: string }> = ({ id }) => {
   const [selectedStage, setSelectedStage] = useState<StageFilter>('all');
   const [activeTab, setActiveTab] = useState<ArtifactTab | null>(null);
   const [focusEventId, setFocusEventId] = useState<string | null>(null);
+  const [middleView, setMiddleView] = useState<'trace' | 'session'>('trace');
 
   const notifiedRef = useRef<Set<string>>(new Set());
   const doneNotifiedRef = useRef(false);
@@ -120,6 +100,14 @@ const RunDetail: React.FC<{ id: string }> = ({ id }) => {
   const filtered = derived.visible.filter(
     (e) => selectedStage === 'all' || e.stage === selectedStage,
   );
+  // 轨迹视图：会话消息流不混入操作时间线（在"会话直播"视图单独呈现）
+  const traceEvents = filtered.filter(
+    (e) => !SESSION_EVENT_KINDS.includes(e.kind),
+  );
+  // 会话视图：会话边界/消息 + 带会话归属的工具调用
+  const sessionEvents = filtered.filter(
+    (e) => SESSION_EVENT_KINDS.includes(e.kind) || (e.sessionId !== undefined && e.kind.startsWith('tool_')),
+  );
 
   const onOpenArtifact = (e: AgentEvent) => {
     if (!e.artifact) return;
@@ -137,11 +125,14 @@ const RunDetail: React.FC<{ id: string }> = ({ id }) => {
         <Typography.Title level={4} style={{ margin: 0 }}>
           {run.meta.name}
         </Typography.Title>
-        <Tag color={meta.color}>{meta.text}</Tag>
+        <Tag color={meta.color} style={{ marginInlineEnd: 0 }}>{meta.text}</Tag>
         {derived.gainPct !== undefined && (
-          <Tag color="green" style={{ fontSize: 13 }}>
-            {pct(derived.gainPct)} vs 官方
-          </Tag>
+          <span className="mono" style={{ fontSize: 14, fontWeight: 650, color: '#52c41a' }}>
+            {pct(derived.gainPct)}
+            <span style={{ fontWeight: 400, fontSize: 11.5, opacity: 0.65, marginLeft: 4 }}>
+              vs 官方
+            </span>
+          </span>
         )}
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
           {run.meta.taskType === 'model' ? '整网模型' : '单算子规格'} ·{' '}
@@ -151,18 +142,18 @@ const RunDetail: React.FC<{ id: string }> = ({ id }) => {
         </Typography.Text>
       </div>
 
-      {/* 七阶段管道 */}
-      <Card size="small">
+      {/* 七阶段管道（点选即过滤事件） */}
+      <div className="panel" style={{ padding: '10px 14px' }}>
         <StagePipeline
           stages={derived.stages}
           selected={selectedStage}
           onSelect={setSelectedStage}
           titles={stageTitles}
         />
-      </Card>
+      </div>
 
       {/* 直播 / 回放控制 */}
-      <Card size="small">
+      <div className="panel" style={{ padding: '8px 14px' }}>
         <ReplayBar
           playing={run.playing}
           speed={run.speed}
@@ -186,64 +177,74 @@ const RunDetail: React.FC<{ id: string }> = ({ id }) => {
             message.warning('任务已终止，现场已保留');
           }}
         />
-      </Card>
+      </div>
 
-      {/* 三栏：阶段树 / 轨迹 / 检视 */}
+      {/* 两区：轨迹/会话 + 产物检视 */}
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-        <Card size="small" title="阶段" style={{ width: 190, flexShrink: 0 }}>
-          <Menu
-            mode="inline"
-            style={{ border: 'none', padding: 0 }}
-            selectedKeys={[selectedStage]}
-            onClick={({ key }) => setSelectedStage(key as StageFilter)}
-            items={[
-              { key: 'all', icon: <UnorderedListOutlined />, label: '全部事件' },
-              ...derived.stages.map((s) => ({
-                key: s.key,
-                icon: stageMenuIcon(s.status),
-                label: (
-                  <Space size={4}>
-                    <span>{STAGE_LABEL[s.key]}</span>
-                    {s.iterations.length > 0 && (
-                      <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                        {s.iterations.length > 1
-                          ? `${s.iterations.length}次`
-                          : s.iterations[0]}
-                      </Typography.Text>
-                    )}
-                  </Space>
-                ),
-              })),
-            ]}
-          />
-        </Card>
-
-        <Card
-          size="small"
-          title={`操作轨迹${selectedStage !== 'all' ? ` · ${STAGE_LABEL[selectedStage as Stage]}` : ''}（${filtered.length} 条）`}
+        <div
+          className="panel"
           style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}
-          styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' } }}
         >
-          <TraceTimeline
-            events={filtered}
-            startTimeLabel={run.meta.startTimeLabel}
-            onOpenArtifact={onOpenArtifact}
-          />
-        </Card>
+          <div className="panel-head">
+            <Segmented
+              size="small"
+              value={middleView}
+              onChange={(v) => setMiddleView(v as 'trace' | 'session')}
+              options={[
+                { label: '操作轨迹', value: 'trace' },
+                { label: '会话直播', value: 'session' },
+              ]}
+            />
+            {middleView === 'trace' && (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {selectedStage !== 'all' ? `${STAGE_LABEL[selectedStage as Stage]} · ` : ''}
+                {traceEvents.length} 条
+              </Typography.Text>
+            )}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {middleView === 'trace' ? (
+              <TraceTimeline
+                events={traceEvents}
+                startTimeLabel={run.meta.startTimeLabel}
+                onOpenArtifact={onOpenArtifact}
+              />
+            ) : (
+              <SessionLive events={sessionEvents} playing={run.playing} />
+            )}
+          </div>
+        </div>
 
-        <Card
-          size="small"
-          title="产物检视"
-          style={{ width: '38%', minWidth: 340, flexShrink: 0, display: 'flex', flexDirection: 'column' }}
-          styles={{ body: { flex: 1, minHeight: 0, overflow: 'auto' } }}
+        <div
+          className="panel"
+          style={{
+            width: '40%',
+            minWidth: 340,
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          <InspectorPanel
-            artifacts={derived.artifacts}
-            activeTab={activeTab}
-            onTabChange={(t) => setActiveTab(t)}
-            focusEventId={focusEventId}
-          />
-        </Card>
+          <div className="panel-head">
+            <span className="panel-title">产物检视</span>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '4px 12px 12px' }}>
+            <InspectorPanel
+              artifacts={derived.artifacts}
+              activeTab={activeTab}
+              onTabChange={(t) => setActiveTab(t)}
+              focusEventId={focusEventId}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
