@@ -5,6 +5,13 @@
 > 本文档是规划讨论的落盘快照，作为后续规范与骨架开发的基准，随讨论持续更新。
 
 - 状态基线：2026-09-15 规划讨论收敛
+- 本地开发环境备忘（2026-09-17，dsh 装本地以支持"agent 任意环境可运行"——D9）：
+  - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.1`（D7 锁版本：每月检查 release、有新版才升级）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
+  - **模型端点**：`$DSH_HOME/settings.yaml` 的 `llm-deepseek.baseURL` 指向网关 `https://www.dmxapi.cn/v1`（OpenAI 兼容协议；provider 仍为内置 `deepseek-official`），默认模型 `deepseek-v4-flash`（reasoningEffort max）
+  - **凭据**：`$DSH_HOME/.credentials.yaml` 的 `DEEPSEEK_API_KEY`（仓库侧镜像到 `.env`，已被 .gitignore 忽略；旧值备份在同目录 `.credentials.yaml.bak-20260917`）
+  - 网关可用模型 582 个（含 `deepseek-v4-flash` / `deepseek-v4-pro` / `deepseek-v3.1` / `glm-5` / `claude-opus-4-7` 等），为 C9 三协议端点配置提供候选
+  - 源码参考副本：`D:\Tools\DeepSeekHarness`（v0.1.0-rc.5，与全局安装版存在版本差，仅作插件 API 参考）
+  - 待办：C9 把端点配置固化进仓库 `profiles/`，使任意机器 clone 后即可运行（不依赖本机 settings.yaml）
 - 远程环境备忘（2026-09-17 实测核实，`ssh root@10.14.3.87`，凭据见 `环境.txt`，待 E5 #33 迁出至 `.env`）：
   - 主机：openEuler 24.03 LTS-SP3 / 80 核 / 502GB 内存 / 806GB 可用盘
   - NPU：**2 张 910B**（`/dev/davinci1`、`/dev/davinci4`，各 32GB HBM，IT21PDXC01，探查时均空闲）→ D6 并发度上限 2
