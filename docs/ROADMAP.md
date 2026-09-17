@@ -90,7 +90,7 @@ cann-neo/
 1. 分层依赖单向；TS 插件零业务逻辑；Python 领域模块间禁止互相 import
 2. 模型端点只在 settings.yaml/profiles 配置；凭据仅 `apiKeyEnv` 引用（`环境.txt` 明文密码迁出）
 3. 工具规范：类型化 schema + 超时 + 结构化错误码 + 幂等 + 单测强制
-4. Loop 规范：七阶段（identify→strategy→implement→verify→bench→summarize→deliver）；每阶段预算（时间/token/迭代）；检查点断点恢复；失败 N 次降级
+4. Loop 规范：七阶段（identify→strategy→implement⇄verify→bench→summarize→deliver）；预算（墙钟 + 单 session token；2026-09-17 修订：token 1M、迭代/重试无次数上限）；检查点断点恢复；失败分流由 routing 判定会话在固定边集内决策（判据注入、decision 事件留痕）、墙钟耗尽降级
 5. 事件流规范：统一 Event Schema（stage/tool/iteration/decision/checkpoint/degrade），追加写 events.jsonl，禁止篡改历史事件；前端只读该流
 6. 基准方法学：单算子级官方基线调用或关闭 ATC 融合；预热/迭代次数/统计口径（p50/p99）/同步点统一
 7. RAG：`retrieve(query, top_k, filter)`；经验条目 schema（问题/方案/结果/复用条件）；run 结束自动回流；skills=静态方法论 vs RAG=动态经验+CANN 文档

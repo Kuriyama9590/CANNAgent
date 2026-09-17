@@ -80,16 +80,14 @@ budgets: {}
 | `atc` | `disabled` | 显式关闭自动融合的选项名（写入 bench 日志，报告可审计） |
 | `metric` | `{warmup: 20, iters: 100, stats: [p50, p99]}` | 统一口径 |
 
-### 1.5 预算（`budgets`，缺省值）
+### 1.5 预算（`budgets`，缺省值；2026-09-17 修订）
 
 | 字段 | 缺省 | 含义 |
 |---|---|---|
-| `max_wall_min` | 90 | 单任务墙钟上限（分钟） |
-| `max_tokens` | 200_000 | 单任务 token 上限 |
-| `max_iterations.verify` | 3 | 精度/测试阶段最大迭代 |
-| `max_iterations.implement` | 3 | 编码阶段最大编译失败重试 |
+| `max_wall_min` | 90 | 整 run 墙钟上限（分钟），**唯一硬性终止条件**（超限→降级） |
+| `max_tokens` | 1_000_000 | **单 session** token 上限（session 内累计消耗口径）；满额即收尾该 session 并新开续跑，不终止 run |
 
-超限语义见 workflow.md §4（降级）。
+**无次数上限**（2026-09-17 用户拍板）：不设 `max_iterations`——implement 编译失败重试、verify 迭代、回 strategy 重规划均不限次，持续优化直至达标或墙钟耗尽。超限语义见 workflow.md §3/§4。
 
 ## 2. run 目录规范
 
