@@ -88,6 +88,7 @@ defineTool({
 
 - dsh 处于 developer preview，有 breaking changes；插件 peerDependencies **不钉死 patch**，月检发现新版 → 升级 → 跑插件回归基线（vitest 全量 + 一轮 headless 冒烟 + SDK 常驻冒烟）→ 走 ADR 记录
 - **双通道对齐**（C1 F4）：npm `@deepseek-ai/dsh`（CLI/profile 面）与 pip `deepseek-harness-runtime-bin`（SDK runtime 面）分别升级、分别冒烟；插件 API 以**实际加载 runtime 的版本**为准
+- **⚠️ PATH 遮蔽**（C2 F2）：pip 安装会在 venv `Scripts/` 放同名 `dsh`（Python 包装器，行为不同且有自身缺陷）——脚本一律显式路径调用 npm 版（或固定 PATH 顺序：npm 在 venv Scripts 之前）；Python 侧统一走 SDK，不使用 CLI 包装器
 - 回归基线用例清单（每插件至少）：工具注册成功 / schema 拒收非法入参 / 转发成功与失败路径 / 事件落盘 / 状态机边集校验
 
 ## 8. 禁止清单
