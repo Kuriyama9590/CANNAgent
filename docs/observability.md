@@ -61,7 +61,7 @@
 
 | tab | 内容 | 生产数据来源 |
 |---|---|---|
-| `bench` | 性能对比（baseline/optimized 的 p50/p99、gainPct、口径 note） | `bench/bench_v{N}.json` |
+| `bench` | 性能对比（baseline / optimized / atc 三份的 p50/p99、gainPct、ATC 门槛结论、口径 note） | `bench/bench_v{N}_{baseline,optimized,atc}.json` |
 | `accuracy` | 精度报告（误差、通过率、迭代记录） | `verify/accuracy_v{N}.json` |
 | `diff` | 代码变更（file/summary/unified diff 文本） | implement 迭代快照 diff |
 | `strategy` | 策略文档（markdown） | `strategy/STRATEGY.md` |

@@ -109,7 +109,7 @@ workspace/runs/<run_id>/
 ├── verify/
 │   └── accuracy_v{N}.json # 每迭代精度报告
 ├── bench/
-│   └── bench_v{N}.json    # 官方基线与优化后各一份
+│   └── bench_v{N}_{baseline,optimized,atc}.json   # 官方基线 / 优化后 / ATC 门槛对照（D4）
 ├── summarize/
 │   └── exp-{id}.json      # 经验条目（schema 见 rag.md）
 ├── deliver/               # 最终交付包（可独立打包带走）

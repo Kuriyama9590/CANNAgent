@@ -416,7 +416,7 @@ const raw: RawEvent[] = [
     message: {
       part: 'thinking',
       content:
-        '用例设计：random ×64 覆盖常规分布 + boundary ×16 打边界（固定 seed 保证可复现）。基线用官方单算子 API 逐个调用并关闭 ATC 自动融合——否则对比口径会被图优化污染。',
+        '用例设计：random ×64 覆盖常规分布 + boundary ×16 打边界（固定 seed 保证可复现）。基线走官方 aclnn 单算子 API 逐个调用——天然无 ATC 图融合，口径干净；另测启用 ATC 的对照作为有效性门槛（优化不强于 ATC 视为无效）。',
     },
   },
   { tsMin: 27.3, stage: 'verify', kind: 'iteration_started', title: '迭代 v1：精度验证', iteration: 'v1' },
@@ -426,10 +426,10 @@ const raw: RawEvent[] = [
     kind: 'tool_completed',
     sessionId: 's4-verify',
     title: '生成测试用例',
-    detail: '基线：官方 Conv2D / BN / ReLU 单算子 API 逐个调用（关闭 ATC 自动融合，排除干扰）',
+    detail: '基线：官方 Conv2D / BN / ReLU 走 aclnn 单算子 API（无 ATC 图融合，口径干净）',
     tool: {
       name: 'gen_test',
-      input: { cases: 'random ×64 + boundary ×16', atc: '--disable_fusion' },
+      input: { cases: 'random ×64 + boundary ×16', atc: 'enabled（有效性门槛对照）' },
       output: { cases: 80, seed: 20260915 },
     },
   },
@@ -716,7 +716,7 @@ const raw: RawEvent[] = [
       title: '精度报告 · v3',
       data: {
         用例: 'random ×64 + boundary ×16',
-        基线: 'CANN 官方实现（关闭 ATC 自动融合）',
+        基线: 'CANN 官方实现（aclnn 单算子 + ATC 门槛）',
         max_rel_err: '2.4e-6',
         阈值: '1e-3',
         通过: '80 / 80',
@@ -757,7 +757,7 @@ const raw: RawEvent[] = [
     stage: 'bench',
     kind: 'session_started',
     sessionId: 's7-bench',
-    title: 'bench 会话 · 双份测量',
+    title: 'bench 会话 · 三份测量（基线/优化/ATC 门槛）',
     detail: '基准',
   },
   {
@@ -769,7 +769,7 @@ const raw: RawEvent[] = [
     message: {
       part: 'thinking',
       content:
-        '口径先钉死：基线走官方单算子 API（关闭 ATC 自动融合），预热 20 / 迭代 100，判死只看 p50，同步点 aclrtSynchronizeStream。双份测量先基线后优化，同卡同频。',
+        '口径先钉死：基线走官方 aclnn 单算子 API（无 ATC 图融合），预热 20 / 迭代 100，判死只看 p50，同步点 aclrtSynchronizeStream。三份测量：基线 → 优化 → ATC 门槛对照，同卡同频。',
     },
   },
   {
@@ -778,12 +778,12 @@ const raw: RawEvent[] = [
     kind: 'tool_completed',
     sessionId: 's7-bench',
     title: '基准环境确认',
-    detail: '官方基线以单算子 API 调用运行（关闭 ATC 自动融合），预热 20 次 / 迭代 100 次',
+    detail: '官方基线以 aclnn 单算子 API 运行（无 ATC 图融合），预热 20 次 / 迭代 100 次；ATC 门槛对照单测一组',
     tool: {
       name: 'bench_setup',
       input: {
         device: 'Ascend 910B',
-        baseline: 'CANN 官方实现（--disable_fusion）',
+        baseline: 'CANN 官方实现（aclnn 单算子）+ ATC 门槛对照',
         warmup: 20,
         iters: 100,
         metric: 'p50 / p99 时延',
@@ -819,7 +819,7 @@ const raw: RawEvent[] = [
       tab: 'bench',
       title: '性能对比：融合算子 v3 vs 官方基线',
       data: {
-        baselineName: '官方实现（关闭 ATC 融合）',
+        baselineName: '官方实现（aclnn 单算子）',
         optimizedName: '融合算子 v3',
         unit: 'ms',
         baseline: { p50: 1.08, p99: 1.35 },
@@ -931,7 +931,7 @@ const raw: RawEvent[] = [
       title: '交付清单',
       data: {
         'code/': 'conv_bn_relu_v3 算子源码 + host 侧调用 + CMake 脚本',
-        'tests/': '80 个精度用例 + 基准脚本（关闭 ATC 融合）',
+        'tests/': '80 个精度用例 + 基准脚本（aclnn 基线 + ATC 门槛）',
         'STRATEGY.md': '优化策略文档（方案#2）',
         'REPORT.md': '精度 + 性能报告',
         'experience/exp-0132.json': '经验回流条目',
@@ -958,7 +958,7 @@ const raw: RawEvent[] = [
           '- 优化对象：16 处 Conv2D+BN+ReLU 热点段，方案#2（BN 折叠 + ReLU epilogue）',
           '',
           '## 精度',
-          '- 基线：CANN 官方实现，单算子 API 逐个调用，关闭 ATC 自动融合',
+          '- 基线：CANN 官方实现，aclnn 单算子 API 逐个调用（无 ATC 图融合）；另测启用 ATC 的对照作为有效性门槛',
           '- v3：80 / 80 用例通过，max_rel_err 2.4e-6（阈值 1e-3）',
           '- 迭代：v1 3.1e-2 → v2 1.8e-3 → v3 2.4e-6',
           '',

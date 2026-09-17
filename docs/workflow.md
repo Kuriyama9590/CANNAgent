@@ -1,7 +1,7 @@
 # 七阶段任务状态机规范（workflow）
 
 > 阶段② 规范文档 · 关联任务 B6 · `plugins/dsh-cann-loop` 的权威行为定义。
-> 状态：v1 草案（阻塞策略可在 D6 拍板后微调；2026-09-17 用户拍板两项修订——①预算：单 session token 上限 1M、取消迭代/重试次数上限，见 §3；②转移：失败分流改由 routing 判定会话在边集内决策，见 §2）
+> 状态：v1 草案（2026-09-17 用户拍板：①预算——单 session token 上限 1M、取消迭代/重试次数上限，见 §3；②转移——失败分流改由 routing 判定会话在边集内决策，见 §2；③并发——持久化卡队列与卡数口径，见 §6）
 
 ## 1. 总原则
 
@@ -24,7 +24,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 | strategy | 融合候选 + RAG 检索 | `strategy/STRATEGY.md` + strategy.json | retrieve, strategy_gen | 策略文档落盘且通过 schema 校验 |
 | implement | 策略 | `implement/vN/` 完整快照 | code_gen, patch_code, build, analyze_error | 编译通过（build 成功，= 直通判定） |
 | verify | 编译产物 | `verify/accuracy_vN.json` | gen_test, run_test, analyze_accuracy | 报告落盘且过校验点；达标 = 直通判定 |
-| bench | 通过精度的版本 | `bench/bench_vN.json`（基线+优化各一份） | bench_setup, run_bench | 双份测量完成 |
+| bench | 通过精度的版本 | `bench/bench_v{N}_{baseline,optimized,atc}.json` | bench_setup, run_bench | 三份测量完成（含 ATC 门槛对照） |
 | summarize | 全程事件+产物 | `summarize/exp-*.json` | experience_write | 经验条目过校验写入知识库 |
 | deliver | 全部产物 | `deliver/` 完整交付包 | package, gen_report | 清单四项齐（code/STRATEGY/REPORT/tests）+ 复现脚本自检 |
 
@@ -53,7 +53,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 
 3. **结构校验与兜底**：`next` 不在边集内 / 缺失 / schema 非法 → 取默认边（**implement**，最保守的"再修一轮"）并发 warning 事件。兜底不是常态路径，只保证判定会话失效时 run 不中断
 
-4. **判据计算 = 证据，不是判决**：`err_best / p50_best`（按当前 strategy 路线起算，重规划换路线后重新积累；vN 标签仍全 run 单调递增）、停滞标记（连续 2 次不优于历史最优）、bench 噪声容差 ε（默认 0 = 严格优于，D4 拍板后可配；verify 固定 seed 无噪声不容差）、编译错误分类（analyze_error 错误码映射：代码层 / 路线不可行）——全部进 manifest 供判定会话参考，**不直接决定去向**
+4. **判据计算 = 证据，不是判决**：`err_best / p50_best`（按当前 strategy 路线起算，重规划换路线后重新积累；vN 标签仍全 run 单调递增）、停滞标记（连续 2 次不优于历史最优）、bench 噪声容差 ε（默认 0 = 严格优于，D4 已拍板、可按任务配置；verify 固定 seed 无噪声不容差）、编译错误分类（analyze_error 错误码映射：代码层 / 路线不可行）——全部进 manifest 供判定会话参考，**不直接决定去向**
 
 5. **硬闸门不经判定会话**（插件直判）：墙钟耗尽→降级；单 session token 满→滚转新 session 续跑；任何转移前先过阶段完成判定（产物 schema 校验）；所有转移边无次数上限，唯一终止 = 达标/完成或墙钟耗尽
 
@@ -166,7 +166,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 #### bench
 
 - **输入**：通过精度判定的 `implement/vN/artifacts` + task.yaml `baseline` 段（`impl`：aclnn/torch_npu；`metric` 口径）+ ATC 门槛对照（`atc: enabled`，D4）
-- **输出**：`bench/bench_v{N}_baseline.json` 与 `bench/bench_v{N}_optimized.json`（双份，结构相同；ATC 对照结果另存 `bench_v{N}_atc.json`，结构同）
+- **输出**：`bench/bench_v{N}_baseline.json`、`bench_v{N}_optimized.json` 与 `bench_v{N}_atc.json`（三份，结构相同；atc 为 ATC 门槛对照，D4）
   ```jsonc
   { "schema_version": "1.0",
     "version": "v2",                        // 对应 implement/vN 的迭代号
@@ -181,7 +181,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
   ```
 - **gain 口径**：`gain_pct = (baseline.p50_us − optimized.p50_us) / baseline.p50_us × 100`（判死用 p50；p99 仅供报告参考）
 - **ATC 有效性门槛（D4 拍板 2026-09-17）**：`optimized.p50_us` 须强于启用 ATC 自动优化的对照结果（`bench_v{N}_atc.json`），否则本迭代判为**无效优化**（不进入交付）；两种口径差异写入交付报告
-- **校验点**：双份文件齐全（ATC 门槛启用时三份）；`iters` 与配置一致；`device` 必填（可审计）
+- **校验点**：三份文件齐全（baseline / optimized / atc）；`iters` 与配置一致；`device` 必填（可审计）
 
 #### summarize
 
@@ -213,7 +213,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
     "gain_pct": 6.2,                        // 最终收益（vs 官方基线，p50 口径）
     "checksums": { "REPORT.md": "sha256:…", "run.sh": "sha256:…" } }  // 关键文件校验和（防篡改）
   ```
-- **REPORT.md 必含**：任务信息 / 最终版本与迭代史 / 精度结论 / 性能对比（vs target 与 vs baseline）/ 复现步骤
+- **REPORT.md 必含**：任务信息 / 最终版本与迭代史 / 精度结论 / 性能对比（vs target、vs baseline 与 vs ATC 门槛）/ 复现步骤
 - **校验点**（= 直通判定）：manifest 四项路径存在 + `run.sh --check` 自检通过 + checksums 复核一致
 
 ## 3. 预算（缺省值，task.yaml 可覆盖；2026-09-17 用户拍板修订）
@@ -244,9 +244,9 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
 - 恢复语义：进程崩溃/重启后，loop 插件扫描最新合法检查点 → 从该阶段重入 → **所有工具必须幂等**（同输入重复执行结果一致；编译/测试天然满足，gen_test 用固定 seed）
 - 恢复本身发 `note` 事件，恢复前的 seq 保留（append-only 不破坏）
 
-## 6. 并发与 NPU 队列（简述，D6 拍板后细化）
+## 6. 并发与 NPU 队列（D6 已拍板）
 
-第一版：一个 run 独占一张 NPU 卡；loop 插件维护卡队列，排队 run 状态为 `pending`；队列是否持久化待 D6。迭代无次数上限（§3）后，单 run 卡占用时长的上界由 `max_wall_min` 保证——队列公平性依赖各任务的该值合理配置。
+第一版：一个 run 独占一张 NPU 卡；loop 插件维护**持久化**卡队列（队列状态落盘，dsh / 服务器重启后任务不丢、自动续排），排队 run 状态为 `pending`；卡数可配置——昇腾服务器实测可用 2 张 910B，即并发度上限 2（D6 拍板 2026-09-17 + 环境实测）。迭代无次数上限（§3）后，单 run 卡占用时长的上界由 `max_wall_min` 保证——队列公平性依赖各任务的该值合理配置。
 
 ## 7. 阶段 system prompt 约定
 

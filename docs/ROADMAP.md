@@ -5,6 +5,7 @@
 > 本文档是规划讨论的落盘快照，作为后续规范与骨架开发的基准，随讨论持续更新。
 
 - 状态基线：2026-09-15 规划讨论收敛
+- 任务跟踪：issue 与[开发看板](https://github.com/users/Kuriyama9590/projects/1)（`docs/CannAgent-TODO.xlsx` 为迁移前的历史存档，不再更新）
 - 本地开发环境备忘（2026-09-17，dsh 装本地以支持"agent 任意环境可运行"——D9）：
   - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.2`（D7：**每月检查一次 release，有新版即升级**——不钉版本，升级走 ADR + 插件回归测试基线）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
   - **模型端点**：`$DSH_HOME/settings.yaml` 的 `llm-deepseek.baseURL` 指向网关 `https://www.dmxapi.cn/v1`（OpenAI 兼容协议；provider 仍为内置 `deepseek-official`），默认模型 `deepseek-v4-flash`（reasoningEffort max）
@@ -55,7 +56,7 @@
 | 决策 | 选择 | 依据 |
 |---|---|---|
 | 内核 | **DeepSeek Harness (`dsh`)** | 224k+ stars、MIT；"一切皆插件"（模型/工具/技能/会话/沙箱/存储/循环/调度均为 Cordis 插件）；session-log 架构原生支持无人值守 batch/CI；**锁死 dsh 不留后路**（D1 拍板 2026-09-17：插件直连 dsh API、不建适配层，备选方案仅存档 ADR-001） |
-| 模型端点 | **三协议原生多兼容**：`anthropic-messages` / `openai-completions` / `openai-responses` + 自定义 baseURL + compat 开关（`supportsDeveloperRole` / `maxTokensField` / `thinkingFormat`） | dsh 内置 providers：DeepSeek / Anthropic / OpenAI / Kimi / zai(GLM)；配置 `settings.yaml` 热生效；凭据 `apiKeyEnv` 引用环境变量 |
+| 模型端点 | **三协议原生多兼容**：`anthropic-messages` / `openai-completions` / `openai-responses` + 自定义 baseURL + compat 开关（`supportsDeveloperRole` / `maxTokensField` / `thinkingFormat`） | dsh 内置 providers：DeepSeek / Anthropic / OpenAI / Kimi / zai(GLM)；配置 `settings.yaml` 热生效；凭据 `apiKeyEnv` 引用环境变量；**当前实施**：内置 `deepseek-official` + `baseURL` 指向网关（见本地开发环境备忘） |
 | 语言分层 | TypeScript 写 dsh 插件（零业务逻辑：注册/校验/转发）+ Python 写领域执行层 + React/TS 写前端 | dsh 插件体系是 TS；CANN 生态是 Python。插件直连 dsh API（D1：无适配层） |
 | 前端栈 | React + Vite + TypeScript + Ant Design v5 + ECharts | 明暗双主题（AntD 主题算法）；布局经 demo 评审定稿 |
 | 前端交互 | 轨迹=阶段管道图+下钻；实时=直播+可回放；主题=明暗可切换 | 已确认；整体布局通过 demo 逐项 grill 定稿 |
@@ -102,7 +103,7 @@ cann-neo/
 ```
 
 **run 目录规范**（每任务一个，可追溯落盘）：
-`task.yaml / input/ identify/ strategy/ implement/(v1..vN) verify/ bench/ deliver/(code + STRATEGY.md + REPORT.md) experience/ events.jsonl checkpoints/`
+`task.yaml / input/ identify/ strategy/ implement/(v1..vN) verify/ bench/ summarize/(exp-*.json) deliver/(code + tests + STRATEGY.md + REPORT.md) experience/ events.jsonl checkpoints/`
 
 ## 5. SPEC 规范要点（九条提纲）
 
@@ -123,7 +124,7 @@ cann-neo/
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **已完成**（2026-09-17 逐项 grill 评审通过，布局定稿 = 仪表盘 + 下钻三栏 + 会话直播视图，见 D11） |
-| ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **进行中**：B1/B2/B3/B6/B8 已完成；B4/B5/B7 已随 D1/D3/D4/D5 拍板解除阻塞（2026-09-17） |
+| ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **进行中**：B6/B8 已归档关闭；B1/B2/B3 文档已发布并入主干（SPEC / task-schema / observability，issue 待用户评审判定归档）；B4/B5/B7 已随 D1/D3/D4/D5 拍板解除阻塞（2026-09-17） |
 | ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | 待启动 |
 | ④ 测试与部署 | tests/ + golden 回归集 + README 部署说明 | 待启动 |
 
