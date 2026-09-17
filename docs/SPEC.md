@@ -47,7 +47,7 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 
 ## 6. 基准与精度
 
-- 基线方法学（aclnn 单算子基线 + 启用 ATC 的有效性门槛、统一口径）：`docs/benchmark.md`（D4 已拍板 2026-09-17，待 B4 发布；过渡期按 task-schema.md §1.4 执行）
+- 基线方法学（aclnn 单算子基线 + 启用 ATC 的有效性门槛与 **ATC 优化清单采集**、统一口径）：`docs/benchmark.md`（D4 已拍板 2026-09-17，待 B4 发布；过渡期按 task-schema.md §1.4 执行）
 
 ## 7. RAG 与经验库
 

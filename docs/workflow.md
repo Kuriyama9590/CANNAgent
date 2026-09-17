@@ -181,7 +181,19 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
   ```
 - **gain 口径**：`gain_pct = (baseline.p50_us − optimized.p50_us) / baseline.p50_us × 100`（判死用 p50；p99 仅供报告参考）
 - **ATC 有效性门槛（D4 拍板 2026-09-17）**：`optimized.p50_us` 须强于启用 ATC 自动优化的对照结果（`bench_v{N}_atc.json`），否则本迭代判为**无效优化**（不进入交付）；两种口径差异写入交付报告
-- **校验点**：三份文件齐全（baseline / optimized / atc）；`iters` 与配置一致；`device` 必填（可审计）
+- **ATC 优化清单（门限判定依据，2026-09-17 追加，见 C12 #55）**：判定门槛前必须先**枚举 ATC 对本算子自动应用的优化**（融合/替换等 pass 及其作用范围），据此界定「ATC 边界」——已由 ATC 自动获得的收益不计入我们的增量，agent 的优化目标是**边界之上/之外**的部分；清单与对照性能一并与 run 目录、交付报告同步落盘
+  ```jsonc
+  // bench/atc_opt_list_v{N}.json
+  { "schema_version": "1.0",
+    "version": "v2",                        // 对应 implement/vN
+    "source": "atc 编译日志 / 图 dump",      // 清单来源（可审计）
+    "passes": [                             // ATC 自动优化项（空清单不接受）
+      { "name": "FuseConvBN",               // pass / 优化项名
+        "scope": "node:3,4,5",              // 作用节点或模式
+        "applied": true } ],                // 是否实际生效
+    "overlap_with_ours": ["F001"] }         // 与我们融合候选的重叠（引用 strategy.selected 的 id）
+  ```
+- **校验点**：三份测量文件齐全（baseline / optimized / atc）；ATC 门槛启用时 `atc_opt_list_v{N}.json` 必填且 `passes` 非空；`iters` 与配置一致；`device` 必填（可审计）
 
 #### summarize
 
@@ -213,7 +225,7 @@ identify → strategy → implement ⇄ verify → bench → summarize → deliv
     "gain_pct": 6.2,                        // 最终收益（vs 官方基线，p50 口径）
     "checksums": { "REPORT.md": "sha256:…", "run.sh": "sha256:…" } }  // 关键文件校验和（防篡改）
   ```
-- **REPORT.md 必含**：任务信息 / 最终版本与迭代史 / 精度结论 / 性能对比（vs target、vs baseline 与 vs ATC 门槛）/ 复现步骤
+- **REPORT.md 必含**：任务信息 / 最终版本与迭代史 / 精度结论 / 性能对比（vs target、vs baseline 与 vs ATC 门槛）/ ATC 优化清单与边界说明 / 复现步骤
 - **校验点**（= 直通判定）：manifest 四项路径存在 + `run.sh --check` 自检通过 + checksums 复核一致
 
 ## 3. 预算（缺省值，task.yaml 可覆盖；2026-09-17 用户拍板修订）

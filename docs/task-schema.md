@@ -77,7 +77,7 @@ budgets: {}
 |---|---|---|
 | `kind` | `official` | `official`（CANN 官方算子库）/ `custom`（任务指定实现） |
 | `impl` | `aclnn` | `aclnn`（单算子 API）或 `torch_npu`；**默认 aclnn**，天然不含 ATC 图融合（公平对比口径） |
-| `atc` | `enabled` | **ATC 有效性门槛**（D4 拍板）：另测启用 ATC 自动优化的对照结果，optimized 须强于 ATC 方视为有效，否则判无效优化；口径差异写入交付报告 |
+| `atc` | `enabled` | **ATC 有效性门槛**（D4 拍板）：另测启用 ATC 自动优化的对照结果，optimized 须强于 ATC 方视为有效，否则判无效优化；**并须采集 ATC 优化清单**（ATC 自动应用的 pass 列表，产出 `bench/atc_opt_list_v{N}.json`，见 workflow.md bench 段与 C12 #55）以界定 ATC 边界；口径差异写入交付报告 |
 | `metric` | `{warmup: 20, iters: 100, stats: [p50, p99]}` | 统一口径 |
 
 ### 1.5 预算（`budgets`，缺省值；2026-09-17 修订）

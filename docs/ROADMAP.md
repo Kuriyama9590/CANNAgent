@@ -44,6 +44,7 @@
 ### 1.4 基线（2026-09-17 D4 拍板）
 - CANN 官方算子实现为精度与性能基线：**aclnn 单算子接口**直调官方算子库，天然无 ATC 图融合（公平对比口径）
 - **ATC 有效性门槛**：另测「启用 ATC 自动优化」的对照结果，优化后实现**必须强于 ATC** 方视为有效，否则判为无效优化；两种口径的差异在交付报告中明示
+- **ATC 优化清单**（2026-09-17 追加，见 C12 #55）：门槛判定前先枚举 ATC 自动应用的优化（融合/替换 pass 及作用范围）以界定「ATC 边界」——已被 ATC 自动获得的收益不计入增量，agent 的优化目标是边界之上/之外；清单与对照性能一并进交付报告
 - 测量方法学（预热、迭代次数、p50/p99 统计口径、同步点）由 benchmark.md 固化（B4）
 
 ### 1.5 自主程度
@@ -112,7 +113,7 @@ cann-neo/
 3. 工具规范：类型化 schema + 超时 + 结构化错误码 + 幂等 + 单测强制
 4. Loop 规范：七阶段（identify→strategy→implement⇄verify→bench→summarize→deliver）；预算（墙钟 + 单 session token；2026-09-17 修订：token 1M、迭代/重试无次数上限）；检查点断点恢复；失败分流由 routing 判定会话在固定边集内决策（判据注入、decision 事件留痕）、墙钟耗尽降级
 5. 事件流规范：统一 Event Schema（stage/tool/iteration/decision/checkpoint/degrade），追加写 events.jsonl，禁止篡改历史事件；前端只读该流
-6. 基准方法学：aclnn 单算子官方基线 + 启用 ATC 的有效性门槛（不强于 ATC 判无效，D4）；预热/迭代次数/统计口径（p50/p99）/同步点统一
+6. 基准方法学：aclnn 单算子官方基线 + 启用 ATC 的有效性门槛（不强于 ATC 判无效，D4）；**含 ATC 优化清单采集**（界定 ATC 边界，C12 #55）；预热/迭代次数/统计口径（p50/p99）/同步点统一
 7. RAG：`retrieve(query, top_k, filter)`；经验条目 schema（问题/方案/结果/复用条件）；run 结束自动回流；skills=静态方法论 vs RAG=动态经验+CANN 文档
 8. 前端规范：组件库统一 AntD、图表 ECharts；页面 = 仪表盘 / run 详情（阶段进度+trace）/ 报告页；API 契约先行（OpenAPI）
 9. Git/CI：trunk-based、conventional commits、CI = eslint+tsc+vitest + ruff+mypy+pytest + web build
