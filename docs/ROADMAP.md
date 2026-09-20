@@ -13,7 +13,7 @@
   - **凭据**：`$DSH_HOME/.credentials.yaml` 的 `DEEPSEEK_API_KEY`（仓库侧镜像到 `.env`，已被 .gitignore 忽略；旧值备份在同目录 `.credentials.yaml.bak-20260917`）
   - 网关可用模型 582 个（含 `deepseek-v4-flash` / `deepseek-v4-pro` / `deepseek-v3.1` / `glm-5` / `claude-opus-4-7` 等），为 C9 三协议端点配置提供候选
   - 源码参考副本：`D:\Tools\DeepSeekHarness`（v0.1.0-rc.5，与全局安装版存在版本差，仅作插件 API 参考）
-  - 待办：C9 把端点配置固化进仓库 `profiles/`，使任意机器 clone 后即可运行（不依赖本机 settings.yaml）
+  - ~~待办：C9 把端点配置固化进仓库~~ **已完成（2026-09-20，#26）**：`profiles/` 三协议配置入库（openai-completions 实测通过；llm-pi-ai id 定向覆盖 + agent-default-model 切换；凭据仅 apiKeyEnv）
 - 远程环境备忘（2026-09-17 实测核实，`ssh root@10.14.3.87`，凭据见 `环境.txt`，待 E5 #33 迁出至 `.env`）：
   - 主机：openEuler 24.03 LTS-SP3 / 80 核 / 502GB 内存 / 806GB 可用盘
   - NPU：**2 张 910B**（`/dev/davinci1`、`/dev/davinci4`，各 32GB HBM，IT21PDXC01，探查时均空闲）→ D6 并发度上限 2
@@ -126,7 +126,7 @@ cann-neo/
 |---|---|---|
 | ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **已完成**（2026-09-17 逐项 grill 评审通过，布局定稿 = 仪表盘 + 下钻三栏 + 会话直播视图，见 D11） |
 | ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **已完成**（2026-09-17 B4/B5/B7 发布：benchmark / plugin-dev / rag，PR 见 #10/#11/#12 评论；八篇齐） |
-| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | **进行中**：C1/C2 spike 完成（D2 双写成立）；C3 三插件骨架合入（PR #61）；**C4 python 骨架已合入**——cli/events（唯一写入函数）/task_schema（pydantic 权威）/checkpoint/identify（真实 ONNX 解析）/knowledge，**D3 全链路冒烟通过**（dsh 模型 → 插件 → CLI → run 目录产物 + events.jsonl 精确落 run）；C9/C11/C6/C7 可并行启动 |
+| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | **进行中**：C1/C2 spike 完成（D2 双写成立）；C3 三插件骨架合入（PR #61）；**C4 python 骨架已合入**（D3 全链路冒烟通过）；**C9 profiles/ 已合入**（三协议端点配置，openai-completions 实测）；C11/C6/C7 可并行启动 |
 | ④ 测试与部署 | tests/ + golden 回归集 + README 部署说明 | 待启动 |
 
 ## 7. 待讨论清单
