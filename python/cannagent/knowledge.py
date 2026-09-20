@@ -51,8 +51,11 @@ def experience_write(args: dict[str, object]) -> dict[str, object]:
         context=dict(context) if isinstance(context, dict) else {},
         root_cause=root_cause if isinstance(root_cause, str) else None,
         solution=str(args.get("solution", "")),
-        outcome=(ExperienceOutcome.model_validate(outcome)
-                 if isinstance(outcome, dict) else ExperienceOutcome(status="failed")),
+        outcome=(
+            ExperienceOutcome.model_validate(outcome)
+            if isinstance(outcome, dict)
+            else ExperienceOutcome(status="failed")
+        ),
         reuse_when=str(args.get("reuse_when", "")),
     )
     payload = entry.model_dump_json(indent=2)
