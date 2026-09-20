@@ -17,6 +17,7 @@ RAG 不做决策：检索结果是**证据注入**（进 manifest / prompt），
 ## 2. 存储与检索栈（起步，可替换）
 
 - **SQLite + sqlite-vec + BGE-M3**（D5：服务器零依赖部署）
+- 实现状态（C6，2026-09-20）：SQLite 落地；向量检索暂为 python 侧余弦（sqlite-vec 加速同接口替换）；embedding 后端可插拔——`hash`（开发态零依赖）/ `bge-m3`（生产态，`CANNAGENT_EMBEDDER=bge-m3`）
 - 访问面固定为接口（Python protocol），实现可整体替换为 Qdrant/Milvus 而不影响调用方：
 
 ```python

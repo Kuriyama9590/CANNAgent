@@ -24,6 +24,8 @@ _SEQ: dict[str, int] = {}
 
 _SECRET_KEY_RE = re.compile(r"(?i)(key|token|secret|password|credential)")
 _USER_PATH_RE = re.compile(r"[A-Za-z]:[/\\]+Users[/\\]+[^/\\\"']+")
+# 自由文本中的密钥值模式：sk-xxx 令牌 / key=value / token: xxx
+_SECRET_VALUE_RE = re.compile(r"(?i)((?:sk|pk)-[a-z0-9_-]{8,}|\b(?:key|token|secret|password)\s*[=:]\s*\S+)")
 
 
 def _sanitize(obj: Any) -> Any:
@@ -34,6 +36,22 @@ def _sanitize(obj: Any) -> Any:
         return [_sanitize(v) for v in obj]
     if isinstance(obj, str):
         return _USER_PATH_RE.sub("~", obj)
+    return obj
+
+
+def scrub_secrets(text: str) -> str:
+    """自由文本密钥值擦除（rag.md §8：入库/嵌入前调用）。"""
+    return _SECRET_VALUE_RE.sub("<redacted>", text)
+
+
+def deep_scrub(obj: Any) -> Any:
+    """递归脱敏：键名过滤 + 路径归一 + 字符串密钥值擦除（知识库入库用）。"""
+    if isinstance(obj, dict):
+        return {k: ("<redacted>" if _SECRET_KEY_RE.search(str(k)) else deep_scrub(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [deep_scrub(v) for v in obj]
+    if isinstance(obj, str):
+        return scrub_secrets(_USER_PATH_RE.sub("~", obj))
     return obj
 
 
