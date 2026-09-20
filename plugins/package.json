@@ -1,0 +1,26 @@
+{
+  "name": "@cannagent/plugins-root",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "build": "tsc -b dsh-cann-tools dsh-cann-knowledge dsh-cann-loop",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc -b --dry false dsh-cann-tools dsh-cann-knowledge dsh-cann-loop"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.2",
+    "@types/node": "^24.0.0",
+    "@vitest/expect": "^3.2.4",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    "vitest": "^3.2.4"
+  }
+}

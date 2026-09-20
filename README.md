@@ -12,9 +12,9 @@
 ## 目录结构
 
 ```
-docs/        规范文档：SPEC / workflow / observability / task-schema / ROADMAP / ADR
+docs/        规范文档：SPEC / workflow / observability / task-schema / benchmark / plugin-dev / rag / ROADMAP / ADR / spikes
+plugins/     dsh 插件 workspace：dsh-cann-tools / dsh-cann-knowledge / dsh-cann-loop（pnpm + tsc + vitest）
 web-demo/    前端交互评审 demo（React + Vite + TS + AntD v5 + ECharts，零后端）
-（规划中）plugins/    dsh 插件：dsh-cann-tools / dsh-cann-knowledge / dsh-cann-loop
 （规划中）python/     cannagent 领域执行层 + FastAPI 观测服务
 （规划中）web/        真实 dashboard（由 web-demo 演进）
 ```
