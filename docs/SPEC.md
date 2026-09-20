@@ -64,6 +64,6 @@ web/ → (REST/SSE) → python/cannagent → (进程调用) → plugins/(TS) →
 
 - **Python**：3.10+，uv 管理依赖，ruff（format+lint），mypy strict，pytest
 - **TypeScript**：pnpm workspace，eslint + tsc（strict），vitest
-- **Git**：trunk-based，conventional commits（`feat:/fix:/docs:/spec:`），PR 必过 CI
-- **文档**：规范变更走 PR + 对应子文档同步；架构决策记 `docs/adr/`
-- **CI**：eslint+tsc+vitest / ruff+mypy+pytest / web build；golden 准入（D10 拍板 2026-09-17）：精度硬卡点（max_rel_err ≤ 阈值），性能仅报告不卡点。**当前仓库 CI 仅有 web-demo 构建 + commitlint 两项；TS/Python 侧与 golden 卡点由 E1 #29 / E3 #31 补齐**
+- **Git**：trunk-based，conventional commits（type 白名单以 `.github/commitlint.config.mjs` 为准：feat/fix/docs/style/refactor/perf/test/build/ci/chore/revert），PR 必过 CI
+- **文档**：规范变更走 PR + 对应子文档同步；架构决策记 `docs/adr/`；**实现状态只记 `docs/STATUS.md`**（唯一状态源，各 PR 同步）
+- **CI**（2026-09-20 起四 job）：web-demo 构建 / plugins（pnpm+eslint+tsc+vitest）/ python（ruff+mypy strict+pytest）/ commitlint（PR 时）。golden 准入卡点（D10：精度硬卡点、性能仅报告）待 E2 落地后接入

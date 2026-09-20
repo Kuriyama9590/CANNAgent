@@ -71,7 +71,7 @@ workflow.md §2.1 summarize 段的最小字段的**完整版**（向后兼容扩
 ```
 run 结束 → summarize 会话产出 exp-*.json（schema 校验）→ 写入 run 目录 summarize/ 与 experience/
         → upsert 进知识库（status=draft）→ 交付后人工抽检（D5）
-人工治理（CLI：python -m cannagent knowledge list|show|approve|reject|edit|delete|add）
+人工治理（CLI：python -m cannagent knowledge，op = list | show | approve | reject | edit | delete | add）
         → approved 条目进入默认检索面；draft/rejected 不参与默认检索（显式 filter 可查）
 ```
 

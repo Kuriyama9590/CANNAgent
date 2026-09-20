@@ -14,7 +14,7 @@
 cd plugins
 pnpm install
 pnpm build     # tsc -b（composite，产物 lib/）
-pnpm test      # vitest（24 用例）
+pnpm test      # vitest（用例数以 CI 输出为准）
 pnpm lint      # eslint
 ```
 

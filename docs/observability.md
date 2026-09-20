@@ -31,6 +31,7 @@
                                        // 前端"会话直播"视图按此分组渲染思考/输出/工具调用
 
   "tool": {                           // 可选：工具调用边界
+    "invocation_id": "call_a1b2…",   // 一次调用的稳定配对键（见 §3 tool_* 行）
     "name": "run_test",
     "input": { },                     // 结构化参数（脱敏后）
     "output": { },                    // 结构化结果摘要（大对象截断规则见 §5）
@@ -48,7 +49,7 @@
 | `stage_started` / `stage_completed` / `stage_failed` | 状态机转移（workflow.md） | 每阶段 started 恰好一次；completed/failed 二选一终结 |
 | `session_started` / `session_ended` | dsh 会话边界（loop 插件开/收 session） | 携带 `sessionId`；started 的 title 标会话角色（如 `implement 会话 · v2`、`routing 判定会话`）；ended 说明收尾原因（完成 / token 满滚转 / 异常） |
 | `session_message` | 模型消息增量（思考流 / 文本输出） | 携带 `sessionId` 与 `message.part`（thinking\|text）；按 flush 窗口合并（≤500ms 或 ≤2KB 一条），超长截断同 §5；前端"会话直播"视图的唯一消息来源 |
-| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（tools 插件统一发出） | started/completed 按 `tool.invocation_id` 配对（长工具才有 started；快工具可只发终态）；建议携带 `sessionId` 以便会话视图内联展示 |
+| `tool_started` / `tool_completed` / `tool_failed` | 工具调用边界（tools 插件统一发出） | 三者按 `tool.invocation_id` 配对：**id 由插件在 execute 包装层生成一次**（取 dsh `exec.callId`，缺省 `inv-{uuid}`），started/completed/failed 携带同一 id；python 写入函数对 tool_* 事件强制校验该字段存在（缺失即补全并落 note）。快工具可只发终态（started 省略）；建议携带 `sessionId` 以便会话视图内联展示 |
 | `iteration_started` | implement/verify 新迭代 | `iteration` 必填（v1/v2/…） |
 | `decision` | agent 关键决策（选融合模式/达标判定） | detail 必填理由 |
 | `checkpoint` | 状态机落盘检查点 | detail 带检查点文件相对路径 |
@@ -74,9 +75,39 @@
 ## 5. 写入与消费
 
 - **写入**：`python/cannagent/events.py` 提供唯一写入函数（append + flush + seq 自增，进程内互斥）；dsh 插件经工具调用（spawn python CLI，D3）写入，禁止直接写文件
+- **单写者约定**：`run_id + seq` 唯一的前提是**同一 run 的事件写入串行**——由编排保证（一个 run 一个 loop 驱动、每次工具调用 await 一个 python 子进程）；**不支持多进程并发追加同一 events.jsonl**（seq 会重复）。D6 卡队列保证同一 run 不与自身并发
 - **消费**：FastAPI（C7）`GET /api/runs/{id}/events?after_seq=N` 增量拉取；SSE 端点 tail 推送；回放 = `after_seq=0` 全量重读
-- **截断**：`tool.input/output` 序列化后 > 4KB 保留前 4KB + `{"$truncated": true, "full_ref": <run目录内文件>}`
+- **截断**（就地、保结构）：`tool.input` / `tool.output` 各自序列化后 > 4KB 时，**只替换该字段**为：
+  ```jsonc
+  { "$truncated": true, "preview": "<前 4KB>", "size_bytes": 12345, "full_ref": "spill/tool-{seq}-input.json" }
+  ```
+  全文写 run 目录 spill 文件（`full_ref` 相对 run 目录）；事件的其余字段（kind/stage/seq…）一律不动。顶层 payload 整体仍超限时同语义兜底（同样保留 `run_id/seq/kind/wall_ts` 骨架字段）
 - **顺序保证**：写入方保证 seq 与文件行序一致；消费方按 seq 排序兜底
+
+### 5.1 事件 JSON Schema（骨架字段，权威）
+
+```jsonc
+{
+  "run_id": "r{yyyyMMdd-HHmmss}-{8}",
+  "seq": 1,                                  // run 内从 1 单调递增
+  "ts": 0,                                   // 虚拟进度 ms（loop 注入；骨架期 0）
+  "wall_ts": "ISO-8601 带时区",
+  "stage": "identify|strategy|implement|verify|bench|summarize|deliver",
+  "kind": "stage_started|stage_completed|stage_failed|session_started|session_ended|"
+        + "session_message|tool_started|tool_completed|tool_failed|iteration_started|"
+        + "decision|checkpoint|degrade|note",
+  "title": "string", "detail": "string",
+  "severity": "info|success|warning|error",
+  "iteration": "v1", "sessionId": "s-…",
+  "tool": { "invocation_id": "string", "name": "string",
+            "input": "object|truncated 对象", "output": "object|truncated 对象",
+            "duration_ms": 0 },
+  "artifact": { "tab": "bench|accuracy|diff|strategy|experience|report|meta",
+                "title": "string", "data": "object|{$ref}" },
+  "message": { "part": "thinking|text", "content": "string" }
+}
+// 除 run_id/seq/wall_ts/kind 外均可选；truncated 对象形状见 §5
+```
 
 ## 6. 脱敏与安全
 

@@ -12,11 +12,11 @@
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
 | `schema_version` | string | ✓ | 当前 `1.0`；task-schema 的语义化版本 |
-| `task_type` | enum | ✓ | `model`（整网模型）/ `operator`（单算子规格） |
+| `task_type` | enum | ✓ | `model`（整网模型）/ `operator`（单算子规格）；**互斥**：`model` 段与 `operator` 段只允许出现与 task_type 对应的一个（pydantic 强制，越界即拒收） |
 | `task_name` | string | ✓ | 展示名（run 名称默认取此值） |
 | `baseline` | object | ✓ | 基线配置（见 1.4） |
 | `budgets` | object | ✓ | 预算（见 1.5），缺省值由 workflow.md §3 给出 |
-| `output` | object | ✗ | 交付要求覆盖（如 `target_gain_pct` 已有则冗余） |
+| `output` | object | ✗ | 交付要求覆盖（自由键值对象；如 `target_gain_pct` 已有则冗余） |
 
 ### 1.2 整网模型任务（`task_type: model`）
 

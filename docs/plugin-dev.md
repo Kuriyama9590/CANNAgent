@@ -52,10 +52,10 @@ defineTool({
 })
 ```
 
-1. **schema 单一事实源在 Python**（pydantic，task-schema §3 同理）；TS 侧 schemastery 镜像仅作边界校验。两份 schema 的字段对拍进 CI（E3：`pnpm test:schema`）
+1. **schema 单一事实源在 Python**（pydantic，task-schema §3 同理）；TS 侧 schemastery 镜像仅作边界校验。两份 schema 的字段对拍进 CI（`pnpm test:schema`——白名单/工具表一致性用例）
 2. **幂等**：同参数重复调用结果一致（SPEC §3.4）——转发子命令必须是幂等的；`gen_test` 等带随机性的工具强制透传 seed
 3. **事件发出**（observability §3）：工具边界统一发 `tool_started` / `tool_completed` / `tool_failed`，经 Python 写入函数落 events.jsonl（§4）
-4. 转发进程环境：`cwd` = 当前 run 目录；`CANNAGENT_RUN_ID` / `CANNAGENT_STAGE` 注入子进程；凭据类变量按白名单透传（C11），**禁止整包继承 env**
+4. 转发进程环境：`cwd` = 当前 run 目录；`CANNAGENT_RUN_ID` / `CANNAGENT_STAGE` 注入子进程；凭据类变量按白名单透传（C11），**禁止整包继承 env**——**所有插件（含 dsh-cann-knowledge / dsh-cann-loop）一律复用 dsh-cann-tools 的 `forward()` + `allowlistedEnv()`**，禁止各自 spawn 时直传 `process.env`（security §1 第 3 层防线）
 
 ## 4. 事件拦截与双写（C2 落地依据）
 

@@ -10,11 +10,11 @@
   - **dsh**：npm 全局安装 `@deepseek-ai/dsh@0.1.5-rc.2`（D7：**每月检查一次 release，有新版即升级**——不钉版本，升级走 ADR + 插件回归测试基线）；`DSH_HOME=~/.dsh`；`dsh --profile headless "<任务>"` 已验证可用（2026-09-17 冒烟：单轮任务成功返回，见 C1 #18）
   - **Python SDK**：`deepseek-harness-sdk 0.1.5rc1`（含 `deepseek-harness-runtime-bin` 同版本单文件 exe）已装；⚠️ PyPI 有抢注包 `deepseek-harness`（无关三方客户端）——官方包名必须 `deepseek-harness-sdk`，本机镜像索引可能需 `--index-url https://pypi.org/simple/`；SDK 不隐式读 `~/.dsh`，需显式 `DSH_HOME`；npm 与 pip 双通道版本需同步盯（D7），详见 [C1 spike 报告](spikes/C1-dsh-headless-spike.md) F2/F4
   - **模型端点**：`$DSH_HOME/settings.yaml` 的 `llm-deepseek.baseURL` 指向网关 `https://www.dmxapi.cn/v1`（OpenAI 兼容协议；provider 仍为内置 `deepseek-official`），默认模型 `deepseek-v4-flash`（reasoningEffort max）
-  - **凭据**：`$DSH_HOME/.credentials.yaml` 的 `DEEPSEEK_API_KEY`（仓库侧镜像到 `.env`，已被 .gitignore 忽略；旧值备份在同目录 `.credentials.yaml.bak-20260917`）
+  - **凭据**：`DEEPSEEK_API_KEY` 经 `$DSH_HOME` 凭据 seam（`apiKeyEnv` 引用）与仓库 `.env`（gitignore）注入——**任何凭据值与存放文件名不进文档**（SPEC §2）
   - 网关可用模型 582 个（含 `deepseek-v4-flash` / `deepseek-v4-pro` / `deepseek-v3.1` / `glm-5` / `claude-opus-4-7` 等），为 C9 三协议端点配置提供候选
   - 源码参考副本：`D:\Tools\DeepSeekHarness`（v0.1.0-rc.5，与全局安装版存在版本差，仅作插件 API 参考）
   - ~~待办：C9 把端点配置固化进仓库~~ **已完成（2026-09-20，#26）**：`profiles/` 三协议配置入库（openai-completions 实测通过；llm-pi-ai id 定向覆盖 + agent-default-model 切换；凭据仅 apiKeyEnv）
-- 远程环境备忘（2026-09-17 实测核实，`ssh root@10.14.3.87`，凭据见 `环境.txt`，待 E5 #33 迁出至 `.env`）：
+- 远程环境备忘（2026-09-17 实测核实；访问方式经 `.env` 的 `CANN_SERVER_*` 配置，连接细节不入文档——E5 #33）：
   - 主机：openEuler 24.03 LTS-SP3 / 80 核 / 502GB 内存 / 806GB 可用盘
   - NPU：**2 张 910B**（`/dev/davinci1`、`/dev/davinci4`，各 32GB HBM，IT21PDXC01，探查时均空闲）→ D6 并发度上限 2
   - CANN：9.0.0（`/usr/local/Ascend/cann` → `cann-9.0.0`），驱动/固件 26.0.rc1；`atc` 已在 PATH
