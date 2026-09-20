@@ -1,0 +1,4 @@
+packages:
+  - 'dsh-cann-*'
+allowBuilds:
+  esbuild: true

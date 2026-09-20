@@ -126,7 +126,7 @@ cann-neo/
 |---|---|---|
 | ① 前端 Demo | `web-demo/` 全流程可模拟（三套剧本：直播/完成/降级），交互样式逐项评审 | **已完成**（2026-09-17 逐项 grill 评审通过，布局定稿 = 仪表盘 + 下钻三栏 + 会话直播视图，见 D11） |
 | ② 规范文档 | docs/ 全部规范（SPEC、task-schema、observability 事件流契约、benchmark 方法学、plugin-dev、workflow、rag、ADR-001） | **已完成**（2026-09-17 B4/B5/B7 发布：benchmark / plugin-dev / rag，PR 见 #10/#11/#12 评论；八篇齐） |
-| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | **进行中**：C1 spike 完成（[报告](spikes/C1-dsh-headless-spike.md)）；C2 spike 完成（[报告](spikes/C2-plugin-event-interception-spike.md)——**D2 双写可行性成立**、D3 转发模式与 C11 白名单钩子一并验证）；C3 三插件骨架可启动 |
+| ③ 完整骨架 | plugins/ 三插件 + python/cannagent + web/（demo 演进为真实 dashboard）+ profiles/ | **进行中**：C1/C2 spike 完成（[C1](spikes/C1-dsh-headless-spike.md) / [C2](spikes/C2-plugin-event-interception-spike.md)，D2 双写成立）；**C3 三插件骨架已合入**（tools 15 工具表 + knowledge 2 工具 + loop 状态机/route，24 vitest 用例，真实 dsh 加载冒烟通过）；C4 python 骨架可启动 |
 | ④ 测试与部署 | tests/ + golden 回归集 + README 部署说明 | 待启动 |
 
 ## 7. 待讨论清单

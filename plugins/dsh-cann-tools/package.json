@@ -1,0 +1,21 @@
+{
+  "name": "@cannagent/dsh-cann-tools",
+  "version": "0.1.0",
+  "description": "CannAgent 领域工具插件：注册/校验/转发（零业务逻辑，D3），工具边界事件拦截（C2 定案的 pre-execute + result 双钩子）",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    "./invariant": { "types": "./lib/invariant.d.ts", "default": "./lib/invariant.js" },
+    "./tool-table": { "types": "./lib/tool-table.d.ts", "default": "./lib/tool-table.js" }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
+  }
+}

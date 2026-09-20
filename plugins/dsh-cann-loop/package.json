@@ -1,0 +1,20 @@
+{
+  "name": "@cannagent/dsh-cann-loop",
+  "version": "0.1.0",
+  "description": "CannAgent 状态机插件：七阶段转移边集、routing 判定会话 route 工具、预算与降级（workflow.md 权威行为的实现载体）",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    "./state-machine": { "types": "./lib/state-machine.d.ts", "default": "./lib/state-machine.js" }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
+  }
+}

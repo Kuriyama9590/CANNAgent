@@ -1,0 +1,19 @@
+{
+  "name": "@cannagent/dsh-cann-knowledge",
+  "version": "0.1.0",
+  "description": "CannAgent 知识插件：retrieve / experience_write 工具注册与 python RAG 层转发（rag.md 契约）",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
+  }
+}
