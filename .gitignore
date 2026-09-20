@@ -30,3 +30,8 @@ Thumbs.db
 
 # ZCode 本地配置
 .zcode/
+
+# python 构建产物
+python/cannagent.egg-info/
+python/build/
+*.egg-info/

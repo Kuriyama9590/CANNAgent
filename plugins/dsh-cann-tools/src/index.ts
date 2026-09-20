@@ -6,7 +6,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { PreToolDecision } from '@deepseek-ai/dsh-tools'
+import type { PreToolDecision, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { TOOL_SPECS } from './tool-table.js'
 import { appendEvent, forward, allowlistedEnv } from './forward.js'
 import { ERROR_CODES } from './invariant.js'
@@ -52,58 +52,72 @@ function emit(
   return appendEvent(payload, { python: config.python, module: config.module })
 }
 
-/** dsh-tools 的 ToolExecution 形状（仅取本插件用到的字段） */
-interface ToolExecLike {
-  name: string
-  args?: unknown
+/** 事件归属的 run_id：优先取工具入参（领域工具契约首参），回落进程环境 */
+function ridOf(exec: ToolExecLike): string {
+  const args = exec.arguments
+  if (args !== null && typeof args === 'object' && 'run_id' in args) {
+    const rid = (args as { run_id?: unknown }).run_id
+    if (typeof rid === 'string' && rid !== '') return rid
+  }
+  return process.env.CANNAGENT_RUN_ID ?? 'unknown'
 }
 
-/** ToolExecutionResult 的判别（isError 侧） */
-interface ToolResultLike {
-  isError?: boolean
-  error?: { message?: string }
+/** dsh-tools 的 ToolExecution 形状（仅取本插件用到的字段） */
+/** dsh-tools ToolExecution 的结构子集（字段名 arguments——C4 冒烟实测确认） */
+interface ToolExecLike {
+  name: string
+  arguments?: unknown
 }
 
 export function apply(ctx: Context, config: PluginConfig): void {
   const whitelist = config.whitelist && config.whitelist.length > 0 ? new Set(config.whitelist) : undefined
-  const starts = new Map<ToolExecLike, number>()
 
-  // C11 白名单闸门 + tool_started（C2 F3：deny 场景只发一条 tool_failed）
+  // C11 白名单闸门（C2 F3：deny 场景只发一条 tool_failed；await 保证持久化）
   ctx.on('tools/pre-execute', (exec: ToolExecLike, next: () => Promise<PreToolDecision>): Promise<PreToolDecision> => {
     if (whitelist !== undefined && !whitelist.has(exec.name)) {
-      void emit(config, {
-        run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
+      return emit(config, {
+        run_id: ridOf(exec),
         kind: 'tool_failed',
-        tool: { name: exec.name, input: exec.args },
+        tool: { name: exec.name, input: exec.arguments },
         severity: 'warning',
-      })
-      return Promise.resolve({ kind: 'deny' as const, reason: `cann-tools: ${exec.name} 不在命令白名单（C11）` })
+      }).then(() =>
+        ({ kind: 'deny' as const, reason: `cann-tools: ${exec.name} 不在命令白名单（C11）` }))
     }
-    starts.set(exec, Date.now())
-    void emit(config, {
-      run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
-      kind: 'tool_started',
-      tool: { name: exec.name, input: exec.args },
-      severity: 'info',
-    })
     return next()
   })
 
-  // 终态观察 → tool_completed / tool_failed（失败 contained：不影响结果）
-  ctx.on('tools/result', (exec: ToolExecLike, result: ToolResultLike) => {
-    const started = starts.get(exec)
-    starts.delete(exec)
-    const failed = result.isError === true
-    void emit(config, {
-      run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
-      kind: failed ? 'tool_failed' : 'tool_completed',
-      tool: {
-        name: exec.name,
-        duration_ms: started === undefined ? undefined : Date.now() - started,
-        output: failed ? { error: result.error?.message ?? 'error' } : { ok: true },
+  // 工具边界事件（C2 定案钩子；挂 execute around-waterfall——registry 会 await，
+  // 事件在工具调用自身时间线内持久化，不依赖进程存活到 loop 排空）
+  ctx.on('tools/execute', (exec: ToolExecLike, next: () => Promise<ToolExecutionResult>): Promise<ToolExecutionResult> => {
+    const started = Date.now()
+    return emit(config, {
+      run_id: ridOf(exec),
+      kind: 'tool_started',
+      tool: { name: exec.name, input: exec.arguments },
+      severity: 'info',
+    }).then(() => next()).then(
+      value => {
+        void emitCompleted(false)
+        return value
       },
-      severity: failed ? 'error' : 'success',
-    })
+      (error: unknown) => {
+        void emitCompleted(true, error)
+        throw error
+      },
+    )
+    function emitCompleted(failed: boolean, error?: unknown): Promise<void> {
+      const message = error instanceof Error ? error.message : error === undefined ? 'error' : String(error)
+      return emit(config, {
+        run_id: ridOf(exec),
+        kind: failed ? 'tool_failed' : 'tool_completed',
+        tool: {
+          name: exec.name,
+          duration_ms: Date.now() - started,
+          output: failed ? { error: message } : { ok: true },
+        },
+        severity: failed ? 'error' : 'success',
+      })
+    }
   })
 
   // 工具表注册（D3：全部转发 python CLI）
