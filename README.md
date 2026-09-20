@@ -20,21 +20,29 @@ profiles/   三协议模型端点配置（openai-completions 实测 / anthropic-
 （规划中）web/        真实 dashboard（由 web-demo 演进）
 ```
 
-## 快速开始（web-demo）
+## 快速开始
+
+三条链路独立可跑，任选入口：
 
 ```bash
-cd web-demo
-npm ci
-npm run dev      # http://localhost:5173
+# ① 前端 demo（模拟剧本，零后端）
+cd web-demo && npm ci && npm run dev        # http://localhost:5173
+
+# ② python 领域层（CLI 子命令 + 测试）
+cd python && pip install -e ".[dev,onnx]" && pytest -q
+
+# ③ 插件 workspace（构建 + 测试 + lint）
+cd plugins && pnpm install && pnpm build && pnpm test
 ```
 
-三套模拟剧本：resnet50 直播（含迭代修复）、swinv2 已完成回放、Conv3x3 降级态。
+> 三者串成端到端（dsh 模型 → 插件 → CLI）的加载方法见 `plugins/README.md` 与 `docs/spikes/`。当前端到端覆盖 identify 阶段；七阶段全流程状态见 [STATUS](docs/STATUS.md)。
 
 ## 文档索引
 
 | 文档 | 内容 |
 |---|---|
 | [ROADMAP](docs/ROADMAP.md) | 产品定义、技术决策、架构分层、阶段划分 |
+| [STATUS](docs/STATUS.md) | **实现状态矩阵**（可用/骨架/占位/规划——唯一状态源） |
 | [SPEC](docs/SPEC.md) | 开发规范总纲（九条） |
 | [workflow](docs/workflow.md) | 七阶段任务状态机（预算 / 检查点 / 降级） |
 | [observability](docs/observability.md) | 事件流契约（events.jsonl，append-only） |
@@ -55,6 +63,6 @@ npm run dev      # http://localhost:5173
 
 ## 状态
 
-- **阶段① 前端 Demo：已完成**（2026-09-17 布局与交互评审通过，定稿见 [ROADMAP](docs/ROADMAP.md) §2）
-- **阶段② 规范文档：已完成**——SPEC / workflow / observability / task-schema / benchmark / plugin-dev / rag / ADR-001 全部发布（B1–B8；issue 归档由用户评审判定）
-- **阶段③ 完整骨架：进行中**——C1（dsh headless 运行 spike）已完成（[报告](docs/spikes/C1-dsh-headless-spike.md)，2026-09-17）：headless/批处理/SDK 常驻形态全通过，Python SDK 为推荐主形态；C2（插件事件拦截）依赖解除，为下一关键路径
+**唯一状态源：[docs/STATUS.md](docs/STATUS.md)（实现状态矩阵：可用 / 骨架 / 占位 / 规划 / 远程）**——本节不重复细节，只给一句话定位：
+
+- 阶段①（demo）与阶段②（八篇规范）已完成；阶段③ 进行中：**C1–C4 / C6 / C9 / C11 已合入**（identify 端到端实测），七阶段其余域为占位，详见 [STATUS §2](docs/STATUS.md)

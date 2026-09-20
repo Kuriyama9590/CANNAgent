@@ -23,7 +23,7 @@
 ```bash
 cd python
 pip install -e ".[dev,onnx]"
-pytest -q          # 23 用例
+pytest -q          # 用例数以 CI 输出为准（不在此硬编码）
 ruff check . && ruff format --check .
 mypy cannagent     # strict
 ```
