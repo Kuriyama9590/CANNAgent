@@ -1,0 +1,36 @@
+# ── 三协议端点配置 · openai-completions ──────────────────────────────
+# 已实测实例（2026-09-20，dmxapi 网关 + deepseek-v4-flash，headless 冒烟通过）。
+# 用法：把本文件内容追加进 $DSH_HOME/profiles/<profile>/cordis.patch.yml
+# （或整段替换其 patch 列表）；凭据经 DEEPSEEK_API_KEY 环境变量注入。
+# 规范：SPEC §2（凭据仅 apiKeyEnv 引用）；ROADMAP D-决策「三协议原生多兼容」。
+
+- id: llm-pi-ai
+  name: '@deepseek-ai/dsh-llm-pi-ai'
+  config:
+    providers:
+      dmxapi-openai:
+        displayName: dmxapi 网关（openai-completions）
+        apiKeyEnv: DEEPSEEK_API_KEY
+        api: openai-completions
+        baseURL: https://www.dmxapi.cn/v1
+        compat:
+          thinkingFormat: deepseek
+        models:
+          - id: deepseek-v4-flash
+            name: DeepSeek V4 Flash
+            contextWindow: 1000000
+            maxTokens: 65536
+            reasoningEfforts:
+              off: ""
+              low: low
+              medium: medium
+              high: high
+              max: max
+          # 网关其余模型按需增补（候选清单见 ROADMAP 本地备忘：582 个）
+
+# 默认模型选择切到该路由（id 定向覆盖，不新增条目）
+- id: agent-default-model
+  name: '@deepseek-ai/dsh-agent-default-model'
+  config:
+    provider: dmxapi-openai
+    model: deepseek-v4-flash

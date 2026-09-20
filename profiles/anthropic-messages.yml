@@ -1,0 +1,27 @@
+# ── 三协议端点配置 · anthropic-messages ──────────────────────────────
+# 模板（未实测：仓库内无该协议的真实凭据；字段面与 openai-completions.yml 同源，
+# 来自 dsh-llm-pi-ai 配置契约）。接入时替换 BASE_URL/模型表并填 ANTHROPIC_API_KEY。
+
+- id: llm-pi-ai
+  name: '@deepseek-ai/dsh-llm-pi-ai'
+  config:
+    providers:
+      anthropic-endpoint:
+        displayName: Anthropic Messages 端点
+        apiKeyEnv: ANTHROPIC_API_KEY
+        api: anthropic-messages
+        baseURL: https://your-anthropic-compatible-endpoint   # ← 替换；官方端点可省略 baseURL
+        models:
+          - id: claude-sonnet-4-5
+            name: Claude Sonnet 4.5
+            contextWindow: 200000
+            maxTokens: 64000
+          # 兼容端点的 GLM 等模型按其目录增补
+        # compat:                      # 兼容开关按端点行为开启
+        #   supportsDeveloperRole: false
+
+- id: agent-default-model
+  name: '@deepseek-ai/dsh-agent-default-model'
+  config:
+    provider: anthropic-endpoint
+    model: claude-sonnet-4-5
