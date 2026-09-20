@@ -57,6 +57,7 @@ export function apply(ctx, config) {
                 properties: {
                     results: { type: 'array', required: true },
                     warning: { type: 'string' },
+                    note: { type: 'string' },
                 },
             },
             render: (_args, value) => [{

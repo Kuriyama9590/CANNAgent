@@ -14,44 +14,59 @@ export const Config = z.object({
 function emit(config, payload) {
     return appendEvent(payload, { python: config.python, module: config.module });
 }
+/** 事件归属的 run_id：优先取工具入参（领域工具契约首参），回落进程环境 */
+function ridOf(exec) {
+    const args = exec.arguments;
+    if (args !== null && typeof args === 'object' && 'run_id' in args) {
+        const rid = args.run_id;
+        if (typeof rid === 'string' && rid !== '')
+            return rid;
+    }
+    return process.env.CANNAGENT_RUN_ID ?? 'unknown';
+}
 export function apply(ctx, config) {
     const whitelist = config.whitelist && config.whitelist.length > 0 ? new Set(config.whitelist) : undefined;
-    const starts = new Map();
-    // C11 白名单闸门 + tool_started（C2 F3：deny 场景只发一条 tool_failed）
+    // C11 白名单闸门（C2 F3：deny 场景只发一条 tool_failed；await 保证持久化）
     ctx.on('tools/pre-execute', (exec, next) => {
         if (whitelist !== undefined && !whitelist.has(exec.name)) {
-            void emit(config, {
-                run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
+            return emit(config, {
+                run_id: ridOf(exec),
                 kind: 'tool_failed',
-                tool: { name: exec.name, input: exec.args },
+                tool: { name: exec.name, input: exec.arguments },
                 severity: 'warning',
-            });
-            return Promise.resolve({ kind: 'deny', reason: `cann-tools: ${exec.name} 不在命令白名单（C11）` });
+            }).then(() => ({ kind: 'deny', reason: `cann-tools: ${exec.name} 不在命令白名单（C11）` }));
         }
-        starts.set(exec, Date.now());
-        void emit(config, {
-            run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
-            kind: 'tool_started',
-            tool: { name: exec.name, input: exec.args },
-            severity: 'info',
-        });
         return next();
     });
-    // 终态观察 → tool_completed / tool_failed（失败 contained：不影响结果）
-    ctx.on('tools/result', (exec, result) => {
-        const started = starts.get(exec);
-        starts.delete(exec);
-        const failed = result.isError === true;
-        void emit(config, {
-            run_id: process.env.CANNAGENT_RUN_ID ?? 'unknown',
-            kind: failed ? 'tool_failed' : 'tool_completed',
-            tool: {
-                name: exec.name,
-                duration_ms: started === undefined ? undefined : Date.now() - started,
-                output: failed ? { error: result.error?.message ?? 'error' } : { ok: true },
-            },
-            severity: failed ? 'error' : 'success',
+    // 工具边界事件（C2 定案钩子；挂 execute around-waterfall——registry 会 await，
+    // 事件在工具调用自身时间线内持久化，不依赖进程存活到 loop 排空）
+    ctx.on('tools/execute', (exec, next) => {
+        const started = Date.now();
+        return emit(config, {
+            run_id: ridOf(exec),
+            kind: 'tool_started',
+            tool: { name: exec.name, input: exec.arguments },
+            severity: 'info',
+        }).then(() => next()).then(value => {
+            void emitCompleted(false);
+            return value;
+        }, (error) => {
+            void emitCompleted(true, error);
+            throw error;
         });
+        function emitCompleted(failed, error) {
+            const message = error instanceof Error ? error.message : error === undefined ? 'error' : String(error);
+            return emit(config, {
+                run_id: ridOf(exec),
+                kind: failed ? 'tool_failed' : 'tool_completed',
+                tool: {
+                    name: exec.name,
+                    duration_ms: Date.now() - started,
+                    output: failed ? { error: message } : { ok: true },
+                },
+                severity: failed ? 'error' : 'success',
+            });
+        }
     });
     // 工具表注册（D3：全部转发 python CLI）
     for (const spec of TOOL_SPECS) {

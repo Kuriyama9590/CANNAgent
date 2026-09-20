@@ -14,8 +14,8 @@
 ```
 docs/        规范文档：SPEC / workflow / observability / task-schema / benchmark / plugin-dev / rag / ROADMAP / ADR / spikes
 plugins/     dsh 插件 workspace：dsh-cann-tools / dsh-cann-knowledge / dsh-cann-loop（pnpm + tsc + vitest）
+python/      cannagent 领域执行层：CLI 子命令 + events 唯一写入 + pydantic 权威 schema（pytest + ruff + mypy strict）
 web-demo/    前端交互评审 demo（React + Vite + TS + AntD v5 + ECharts，零后端）
-（规划中）python/     cannagent 领域执行层 + FastAPI 观测服务
 （规划中）web/        真实 dashboard（由 web-demo 演进）
 ```
 

@@ -27,13 +27,18 @@ describe('dsh-cann-knowledge 骨架', () => {
     expect(ctx.registered.map(t => t.name)).toEqual(['retrieve', 'experience_write'])
   })
 
-  it('retrieve：python 缺席时返回空集 + warning（不抛错，run 不阻塞）', async () => {
+  it('retrieve：永远返回空集不抛错——python 缺席带 warning，在场带 note（run 不阻塞）', async () => {
     const ctx = makeCtx()
     apply(ctx as never, {})
     const retrieve = ctx.registered.find(t => t.name === 'retrieve')
-    const result = (await retrieve?.execute({ query: 'Conv+BN+ReLU' })) as { results: unknown[]; warning?: string }
+    const result = (await retrieve?.execute({ query: 'Conv+BN+ReLU' })) as {
+      results: unknown[]
+      warning?: string
+      note?: string
+    }
     expect(result.results).toEqual([])
-    expect(result.warning).toMatch(/检索不可用/)
+    // rag.md §6：检索不可用不阻塞 run——warning（python 缺席）或 note（骨架空库）二选一
+    expect(result.warning !== undefined || result.note !== undefined).toBe(true)
   })
 
   it('experience_write：失败路径抛结构化错误码', async () => {

@@ -59,6 +59,14 @@ describe('dsh-cann-tools 骨架', () => {
     expect(decision).toMatchObject({ kind: 'allow' })
   })
 
+  it('execute waterfall：包装 next 并透传其结果（事件持久化挂点）', async () => {
+    const ctx = makeCtx()
+    apply(ctx as never, {})
+    const sentinel = { value: 42 }
+    const out = await ctx.listeners.get('tools/execute')?.({ name: 'parse_model', args: { run_id: 'r-test' } }, async () => sentinel)
+    expect(out).toBe(sentinel)
+  })
+
   it('pre-execute：未配置白名单时不拦（缺省开放，开发态）', async () => {
     const ctx = makeCtx()
     apply(ctx as never, {})

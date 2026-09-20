@@ -77,6 +77,7 @@ export function apply(ctx: Context, config: PluginConfig): void {
         properties: {
           results: { type: 'array', required: true },
           warning: { type: 'string' },
+          note: { type: 'string' },
         },
       },
       render: (_args: unknown, value: unknown) => [{
