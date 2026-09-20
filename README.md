@@ -42,6 +42,7 @@ npm run dev      # http://localhost:5173
 | [benchmark](docs/benchmark.md) | 基线测量方法学（aclnn 基线 / ＞ATC 或未覆盖 / 口径统一） |
 | [plugin-dev](docs/plugin-dev.md) | dsh 插件开发规范（三插件 / 零业务逻辑 / 加载组合） |
 | [rag](docs/rag.md) | RAG 与经验库规范（条目 schema / 回流治理 / 检索契约） |
+| [security](docs/security.md) | 权限与沙箱边界（三层防线 / 工具白名单 / CANN 环境固定） |
 | [ADR-001](docs/adr/ADR-001-内核选型-dsh.md) | 内核选型：dsh |
 | [C1 spike 报告](docs/spikes/C1-dsh-headless-spike.md) | dsh headless / Python SDK 运行形态验证（阶段③ 关键路径第一环） |
 

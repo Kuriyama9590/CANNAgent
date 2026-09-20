@@ -1,0 +1,36 @@
+# ── 生产工具白名单（C11）──────────────────────────────────────────────
+# 作为 cann-tools 插件 config 注入：白名单外工具调用被 pre-execute 闸门拒绝
+# （docs/security.md 第 2 层防线；一致性测试：plugins 白名单必须覆盖全部领域工具）。
+# 用法：与端点配置同法追加进目标 profile 的 cordis.patch.yml；
+# <repo> 替换为本仓库路径（加载进 SDK 组合文件时用相对路径亦可）。
+# 注意：cann-tools 是新条目，必须用 insert 形态（C2 spike F1 踩坑结论）。
+
+- insert:
+    - id: cann-tools
+      name: <repo>/plugins/dsh-cann-tools/lib/index.js
+      config:
+        whitelist:
+          # ── 领域工具（tool-table.ts 全集 + knowledge/loop）──
+          - parse_model
+          - op_profile
+          - fusion_scan
+          - strategy_gen
+          - code_gen
+          - patch_code
+          - build
+          - analyze_error
+          - gen_test
+          - run_test
+          - analyze_accuracy
+          - bench_setup
+          - run_bench
+          - package
+          - gen_report
+          - retrieve
+          - experience_write
+          - route
+          # ── 最小内置集（implement 写代码必需）──
+          - read
+          - write
+          - edit
+          # bash / pwsh 等 shell 工具不进白名单：命令执行一律经领域工具走任务包（D9）
