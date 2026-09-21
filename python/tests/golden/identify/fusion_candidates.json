@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "candidates": [
+    {
+      "id": "F001",
+      "pattern": "Conv+BN+ReLU",
+      "node_idx": [
+        2,
+        3,
+        4
+      ],
+      "est_gain_pct": 0.0,
+      "references": [],
+      "status": "pending"
+    },
+    {
+      "id": "F002",
+      "pattern": "Conv+BN+ReLU",
+      "node_idx": [
+        5,
+        6,
+        7
+      ],
+      "est_gain_pct": 0.0,
+      "references": [],
+      "status": "pending"
+    },
+    {
+      "id": "F003",
+      "pattern": "Conv+BN",
+      "node_idx": [
+        2,
+        3
+      ],
+      "est_gain_pct": 0.0,
+      "references": [],
+      "status": "pending"
+    },
+    {
+      "id": "F004",
+      "pattern": "Conv+BN",
+      "node_idx": [
+        5,
+        6
+      ],
+      "est_gain_pct": 0.0,
+      "references": [],
+      "status": "pending"
+    }
+  ]
+}

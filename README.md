@@ -58,6 +58,31 @@ cd web && npm ci && npm run dev             # :5174，/api 已代理
 | [ADR-001](docs/adr/ADR-001-内核选型-dsh.md) | 内核选型：dsh |
 | [C1 spike 报告](docs/spikes/C1-dsh-headless-spike.md) | dsh headless / Python SDK 运行形态验证（阶段③ 关键路径第一环） |
 
+## 部署（全栈）
+
+```bash
+# 0) 前置：node≥20 + pnpm 11 + python≥3.10；dsh（npm i -g @deepseek-ai/dsh）；昇腾服务器 SSH 可达
+# 1) 凭据：.env（模板 .env.example）——DEEPSEEK_API_KEY + CANN_SERVER_*
+cp .env.example .env && $EDITOR .env
+
+# 2) 领域层 + 观测服务
+cd python && pip install -e ".[dev,onnx,server]"
+python -m cannagent.server --port 8300 &
+
+# 3) dashboard
+cd ../web && npm ci && npm run dev          # http://localhost:5174（/api → 8300）
+
+# 4) 建任务并跑真实编译（远程 ATC）
+echo '{"task":{"schema_version":"1.0","task_type":"model","task_name":"demo",
+  "model":{"path":"input/model.onnx","opset":13,"input_shape":[1,3,224,224]},
+  "target":{"gain_pct":5}},"input_files":["model.onnx"]}' | python -m cannagent runs
+echo '{"run_id":"<上一步返回>"}' | python -m cannagent build    # → 服务器 atc → om 回传
+
+# 5) dsh agent 链路（可选）：插件加载见 plugins/README.md；端点配置见 profiles/README.md
+```
+
+> 运行形态与限制见 [STATUS](docs/STATUS.md)：identify/ATC 编译链路可用；七阶段其余域为占位。
+
 ## 开发流程
 
 - **trunk-based**：短分支 → PR → 合并 `main`；`main` 受分支保护，禁止直接 push 与 force push

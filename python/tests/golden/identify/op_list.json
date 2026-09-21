@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0",
+  "model": {
+    "format": "onnx",
+    "opset": 13,
+    "ir_version": 14,
+    "input_shape": [
+      1,
+      3,
+      32,
+      32
+    ]
+  },
+  "nodes": [
+    {
+      "idx": 0,
+      "op_type": "Conv",
+      "name": "conv1",
+      "attrs": {
+        "kernel_shape": [
+          3,
+          3
+        ],
+        "pads": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "strides": [
+          1,
+          1
+        ]
+      },
+      "input_shapes": [
+        [
+          1,
+          3,
+          32,
+          32
+        ],
+        [
+          16,
+          3,
+          3,
+          3
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 1,
+      "op_type": "Relu",
+      "name": "relu1",
+      "attrs": {},
+      "input_shapes": [],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 2,
+      "op_type": "Conv",
+      "name": "conv2",
+      "attrs": {
+        "kernel_shape": [
+          3,
+          3
+        ],
+        "pads": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "strides": [
+          1,
+          1
+        ]
+      },
+      "input_shapes": [
+        [
+          16,
+          16,
+          3,
+          3
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 3,
+      "op_type": "BatchNormalization",
+      "name": "bn2",
+      "attrs": {},
+      "input_shapes": [
+        [
+          16
+        ],
+        [
+          16
+        ],
+        [
+          16
+        ],
+        [
+          16
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 4,
+      "op_type": "Relu",
+      "name": "relu2",
+      "attrs": {},
+      "input_shapes": [],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 5,
+      "op_type": "Conv",
+      "name": "conv3",
+      "attrs": {
+        "kernel_shape": [
+          3,
+          3
+        ],
+        "pads": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "strides": [
+          1,
+          1
+        ]
+      },
+      "input_shapes": [
+        [
+          16,
+          16,
+          3,
+          3
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 6,
+      "op_type": "BatchNormalization",
+      "name": "bn3",
+      "attrs": {},
+      "input_shapes": [
+        [
+          16
+        ],
+        [
+          16
+        ],
+        [
+          16
+        ],
+        [
+          16
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 7,
+      "op_type": "Relu",
+      "name": "relu3",
+      "attrs": {},
+      "input_shapes": [],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 8,
+      "op_type": "Conv",
+      "name": "conv4",
+      "attrs": {
+        "kernel_shape": [
+          3,
+          3
+        ],
+        "pads": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "strides": [
+          1,
+          1
+        ]
+      },
+      "input_shapes": [
+        [
+          16,
+          16,
+          3,
+          3
+        ]
+      ],
+      "output_shapes": [],
+      "dtype": "fp16"
+    },
+    {
+      "idx": 9,
+      "op_type": "Relu",
+      "name": "relu4",
+      "attrs": {},
+      "input_shapes": [],
+      "output_shapes": [],
+      "dtype": "fp16"
+    }
+  ],
+  "stats": {
+    "by_type": {
+      "Conv": 4,
+      "Relu": 4,
+      "BatchNormalization": 2
+    },
+    "total_nodes": 10
+  }
+}

@@ -58,7 +58,7 @@
 | 任务包派发（remote.RemoteRunner） | ✅ 可用 | SSH+SFTP 组包/执行/回传；NPU 目录锁（D6 v1）；环境锚定 conda cannagent |
 | build ATC 编译（C5） | ✅ 可用 | **实测**：resblock.onnx → 服务器 atc → om 回传落盘（ATC run success） |
 | ATC 优化清单（C12） | ✅ 可用 | **实测**：fusion_result.json 权威解析 → atc_opt_list_v1.json（18 pass / 4 生效） |
-| golden 基线固化（E2） | ⬜ 规划 | benchmark §8 |
+| golden 回归（E2 最小版） | ✅ 可用 | identify 逐字段 golden + **远程 ATC 编译回归**（applied pass 集比对，实测通过）；aclnn 性能 golden 待 bench 域 |
 
 ## 3. 契约对齐跟踪（文档权威、代码对齐）
 
