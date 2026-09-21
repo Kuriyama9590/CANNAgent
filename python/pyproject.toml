@@ -8,6 +8,7 @@ license = { text = "MIT" }
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +28,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["cannagent*"]
+
+[tool.setuptools.package-data]
+cannagent = ["templates/*"]
 
 [tool.ruff]
 line-length = 110

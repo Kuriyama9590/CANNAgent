@@ -4,16 +4,16 @@
 > 分层标记：**可用**（已实现且实测）/ **骨架**（结构就位、核心逻辑可用、覆盖不全）/ **占位**（结构化 NOT_IMPLEMENTED 占位，规范已定）/ **规划**（仅规范，未动工）/ **远程**（需昇腾服务器环境）。
 > 更新纪律：每个 PR 改变实现状态时同步本矩阵（AGENTS §3 文档权威性）。
 
-## 1. 分层总览（2026-09-20）
+## 1. 分层总览（2026-09-21）
 
 | 层 | 状态 | 说明 |
 |---|---|---|
-| 规范文档（docs/ 八篇 + ADR） | ✅ 可用 | 全部发布；个别条目标「代码跟进中」（见 §3） |
-| plugins/ 三插件 | 🟡 骨架 | 工具表/白名单/状态机边集可用；route 持久化、knowledge 白名单转发 = 代码跟进中 |
-| python/cannagent | 🟡 骨架 | CLI/events/runs/checkpoint/identify/knowledge 可用；strategy→deliver 域为占位 |
+| 规范文档（docs/ 八篇 + ADR） | ✅ 可用 | 全部发布 |
+| plugins/ 三插件 | ✅ 可用 | 工具表/白名单/状态机边集/route 持久化可用；session 编排 = 骨架（见 §3） |
+| python/cannagent | ✅ 可用 | 七阶段域真实现（strategy→deliver）；E2E 实测 gain 33.3% |
 | web-demo/ | ✅ 可用 | 交互评审定稿（模拟剧本，零后端） |
 | web/ 真实 dashboard | ✅ 可用 | 消费 C7 FastAPI + SSE |
-| 远程执行（昇腾服务器） | ✅ 可用 | C5/C12 实测通过（任务包 + ATC 编译 + 清单回传）；E2 待做 |
+| 远程执行（昇腾服务器） | ✅ 可用 | 任务包 + ATC 编译 + aclnn 编译/verify/bench + 清单回传，E2E 实测 |
 
 ## 2. 能力矩阵（规范条目 → 实现）
 
@@ -26,13 +26,16 @@
 | `checkpoint` / `checkpoint-read` | ✅ 可用 | workflow §5 |
 | `parse-model` / `op-profile` / `fusion-scan` | ✅ 可用 | 真实 ONNX 图枚举；D3 全链路实测 |
 | `knowledge`（retrieve/experience_write/list/approve/reject/delete/add） | ✅ 可用 | rag §4/§6；show/edit 代码跟进中 |
-| `strategy-gen` / `code-gen` / `patch-code` | 🟫 占位 | `CANN_E_NOT_IMPLEMENTED` |
-| `build` | ✅ 可用 | C5 真实现：ATC 任务包端到端（om 回传 + C12 清单）；analyze-error 仍占位 |
-| `gen-test` / `run-test` / `analyze-accuracy` | 🟫 占位 | verify 链路（aclnn 基线，远程） |
-| `bench-setup` / `run-bench` | 🟫 占位 | benchmark §4 三份对照（远程） |
-| `package` / `gen-report` | 🟫 占位 | deliver 链路 |
+| `strategy-gen` | ✅ 可用 | RAG 历史收益 + 模式启发式 + 出现次数放大；strategy.json + STRATEGY.md + 候选状态回写 |
+| `code-gen` / `patch-code` | ✅ 可用 | 仿射路线模板渲染（C++ aclnn 双路实现 + om_bench + build.sh）；其余路线结构化拒绝 |
+| `build` | ✅ 可用 | 双车道：算子路线（远程 g++ 编译）/ 模型路线（ATC，C5） |
+| `analyze-error` | ✅ 可用 | 编译/ACLNN/ATC/队列错误分类（routing manifest 证据） |
+| `gen-test` / `run-test` / `analyze-accuracy` | ✅ 可用（远程） | 固定 seed 用例 + 官方 aclnn 对照精度比对 + 趋势；E2E 实测 4/4 通过 |
+| `bench-setup` / `run-bench` | ✅ 可用（远程） | benchmark §4 三份对照同包同卡；异常值剔除/复测/D4 判定；E2E 实测 gain 33.3% |
+| `package` / `gen-report` | ✅ 可用 | 四件套 + manifest sha256 + REPORT.md + `run.sh --check` 自检 |
+| `manifest` | ✅ 可用 | workflow §2 判据注入（趋势/最优/停滞/失败/预算） |
 
-> **端到端现状**：identify 阶段可真实跑通（dsh 模型 → 插件 → CLI → 产物 + 事件）；strategy 起的七阶段流转 = 状态机骨架（插件边集）+ 上述占位，尚不能端到端执行优化流程。
+> **端到端现状（2026-09-21）**：七阶段全链路真实验证通过（`python tests/e2e_affine.py`，affine 仿射 1024×1024 fp32，远程 910B）：identify → strategy → code-gen → build → verify（4/4，max_rel_err 2.3e-03）→ bench（baseline 8.58µs / optimized 5.72µs / atc 72.55µs，gain 33.3%，D4 not_covered→有效）→ deliver（自检通过）。loop 插件的 session 编排（manifest 注入/滚转）见 §3 跟进项。
 
 ### TS 插件（plugins/）
 

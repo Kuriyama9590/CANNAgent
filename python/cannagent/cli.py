@@ -35,18 +35,6 @@ def _emit(obj: dict[str, Any]) -> None:
     sys.stdout.flush()
 
 
-def _not_implemented(subcommand: str, needed_by: str) -> Callable[[dict[str, Any]], dict[str, Any]]:
-    def handler(_args: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "ok": False,
-            "code": "CANN_E_NOT_IMPLEMENTED",
-            "message": f"子命令 {subcommand} 属于 {needed_by} 交付范围，骨架期未实现",
-            "hint": "见 docs/ROADMAP.md 阶段③ 任务分解",
-        }
-
-    return handler
-
-
 def _handler_events() -> Callable[[dict[str, Any]], dict[str, Any]]:
     def handler(args: dict[str, Any]) -> dict[str, Any]:
         from . import events as events_mod
@@ -162,6 +150,172 @@ def _handler_knowledge() -> Callable[[dict[str, Any]], dict[str, Any]]:
     return handler
 
 
+def _handler_strategy_gen() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .strategy import generate
+
+        return generate(str(args.get("run_id", "")))
+
+    return handler
+
+
+def _handler_code_gen() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .codegen import code_gen
+
+        shape = args.get("shape")
+        return code_gen(
+            str(args.get("run_id", "")),
+            version=str(args["version"]) if args.get("version") else None,
+            shape=[int(d) for d in shape] if isinstance(shape, list) else None,
+        )
+
+    return handler
+
+
+def _handler_patch_code() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .codegen import patch_code
+
+        return patch_code(
+            str(args.get("run_id", "")),
+            version=str(args["version"]) if args.get("version") else None,
+            file=str(args["file"]) if args.get("file") else None,
+            content=str(args["content"]) if args.get("content") is not None else None,
+        )
+
+    return handler
+
+
+def _handler_analyze_error() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .codegen import analyze_error
+
+        result = analyze_error(
+            str(args.get("run_id", "")),
+            version=str(args["version"]) if args.get("version") else None,
+        )
+        return {"analysis": result}
+
+    return handler
+
+
+def _handler_gen_test() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .verify import gen_test
+
+        version = str(args.get("version", ""))
+        if not version:
+            raise ValueError("gen-test 需要 version")
+        seed = args.get("seed")
+        cases = args.get("cases")
+        return gen_test(
+            str(args.get("run_id", "")),
+            version,
+            seed=int(seed) if seed is not None else None,
+            cases=int(cases) if cases is not None else None,
+        )
+
+    return handler
+
+
+def _handler_run_test() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .remote import RemoteError
+        from .verify import run_test
+
+        version = str(args.get("version", ""))
+        if not version:
+            raise ValueError("run-test 需要 version")
+        threshold = args.get("threshold")
+        try:
+            return run_test(
+                str(args.get("run_id", "")),
+                version,
+                threshold=float(threshold) if threshold is not None else None,
+            )
+        except RemoteError as exc:
+            return {"ok": False, "code": exc.code, "message": str(exc), "hint": "检查 .env 的 CANN_SERVER_*"}
+
+    return handler
+
+
+def _handler_analyze_accuracy() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .verify import analyze_accuracy
+
+        return analyze_accuracy(
+            str(args.get("run_id", "")),
+            version=str(args["version"]) if args.get("version") else None,
+        )
+
+    return handler
+
+
+def _handler_bench_setup() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .bench import bench_setup
+        from .remote import RemoteError
+
+        try:
+            return bench_setup(str(args.get("run_id", "")))
+        except RemoteError as exc:
+            return {"ok": False, "code": exc.code, "message": str(exc), "hint": "检查 .env 的 CANN_SERVER_*"}
+
+    return handler
+
+
+def _handler_run_bench() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .bench import run_bench
+        from .remote import RemoteError
+
+        version = str(args.get("version", ""))
+        if not version:
+            raise ValueError("run-bench 需要 version")
+        try:
+            return run_bench(str(args.get("run_id", "")), version)
+        except RemoteError as exc:
+            return {"ok": False, "code": exc.code, "message": str(exc), "hint": "检查 .env 的 CANN_SERVER_*"}
+
+    return handler
+
+
+def _handler_package() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .deliver import package
+
+        return package(str(args.get("run_id", "")))
+
+    return handler
+
+
+def _handler_gen_report() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .deliver import gen_report
+
+        return gen_report(str(args.get("run_id", "")))
+
+    return handler
+
+
+def _handler_manifest() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .manifest import build, render
+
+        elapsed = args.get("wall_elapsed_min")
+        m = build(
+            str(args.get("run_id", "")),
+            wall_elapsed_min=float(elapsed) if elapsed is not None else 0.0,
+        )
+        result: dict[str, Any] = {"manifest": m}
+        if args.get("markdown"):
+            result["markdown"] = render(m)
+        return result
+
+    return handler
+
+
 SUBCOMMANDS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     # 真实现（C4 交付）
     "events": _handler_events(),
@@ -173,18 +327,19 @@ SUBCOMMANDS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "fusion-scan": _handler_fusion_scan(),
     "knowledge": _handler_knowledge(),
     "build": _handler_build(),
-    # 结构化占位（后续任务交付）
-    "strategy-gen": _not_implemented("strategy-gen", "C4 后续/C6 RAG 接入"),
-    "code-gen": _not_implemented("code-gen", "C5 build 链路"),
-    "patch-code": _not_implemented("patch-code", "C5"),
-    "analyze-error": _not_implemented("analyze-error", "C5"),
-    "gen-test": _not_implemented("gen-test", "C5/verify 链路"),
-    "run-test": _not_implemented("run-test", "C5（aclnn 基线对照，benchmark §3）"),
-    "analyze-accuracy": _not_implemented("analyze-accuracy", "C5"),
-    "bench-setup": _not_implemented("bench-setup", "C5（benchmark §2 环境指纹）"),
-    "run-bench": _not_implemented("run-bench", "C5（三份对照，benchmark §4）"),
-    "package": _not_implemented("package", "deliver 链路"),
-    "gen-report": _not_implemented("gen-report", "deliver 链路"),
+    # 七阶段域实现（strategy/implement 支撑/verify/bench/deliver + manifest）
+    "strategy-gen": _handler_strategy_gen(),
+    "code-gen": _handler_code_gen(),
+    "patch-code": _handler_patch_code(),
+    "analyze-error": _handler_analyze_error(),
+    "gen-test": _handler_gen_test(),
+    "run-test": _handler_run_test(),
+    "analyze-accuracy": _handler_analyze_accuracy(),
+    "bench-setup": _handler_bench_setup(),
+    "run-bench": _handler_run_bench(),
+    "package": _handler_package(),
+    "gen-report": _handler_gen_report(),
+    "manifest": _handler_manifest(),
 }
 
 

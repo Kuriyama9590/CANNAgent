@@ -26,18 +26,58 @@ def next_version(root: Path) -> str:
 
 
 def build(rid: str, version: str | None = None) -> dict[str, Any]:
-    """ATC 编译（真实现）：输入 = run 的 task.yaml model 段 onnx。"""
+    """实现编译（直通判定产物生产）。
+
+    双车道（workflow §2.1 implement）：
+    - 算子路线：implement/vN/build.sh 存在 → 远程编译快照（g++，artifacts = 可执行）
+    - 模型路线：task.model 输入 onnx → 服务器 atc 编译（soc_version=Ascend910B）
+    """
     root = run_dir(rid)
     from .runs import load_task
 
     task = load_task(root)
+    version = version or next_version(root / "implement")
+    imp = root / "implement" / version
+
+    if (imp / "build.sh").exists():
+        return _compile_snapshot(root, rid, version, imp)
+    return _build_atc(root, task, rid, version)
+
+
+def _compile_snapshot(root: Path, rid: str, version: str, imp: Path) -> dict[str, Any]:
+    """算子路线：任务包 = 实现快照 → bash build.sh → 二进制回填 artifacts/。"""
+    files = {str(p.relative_to(imp).as_posix()): p.read_bytes() for p in imp.rglob("*") if p.is_file()}
+    result = RemoteRunner().run_package(
+        package=f"{rid}-build-{version}",
+        files=files,
+        command="bash build.sh",
+        expect_outputs=["artifacts/affine_impl"],
+        timeout=600,
+        need_npu=False,  # 纯编译；NPU 锁留给 verify/bench（D6）
+    )
+    (imp / "build.log").write_text(result["log"], encoding="utf-8")
+    binary = result["outputs"].get("artifacts/affine_impl")
+    if binary:
+        (imp / "artifacts").mkdir(exist_ok=True)
+        (imp / "artifacts" / "affine_impl").write_bytes(binary)
+    return {
+        "ok": bool(result["ok"] and binary),
+        "version": version,
+        "lane": "operator",
+        "artifacts": {"binary": f"implement/{version}/artifacts/affine_impl"} if binary else {},
+        "exit_code": result.get("exit_code"),
+        "log_path": f"implement/{version}/build.log",
+    }
+
+
+def _build_atc(root: Path, task: Any, rid: str, version: str) -> dict[str, Any]:
+    """模型路线：ATC 编译（既有实现）。"""
     if task.model is None:
         raise ValueError("build 需要整网模型输入（task_type=model）")
     onnx_path = root / task.model.path
     if not onnx_path.exists():
         raise FileNotFoundError(f"model not found: {onnx_path}")
 
-    version = version or next_version(root / "implement")
     out_dir = root / "implement" / version
     (out_dir / "artifacts").mkdir(parents=True, exist_ok=True)
 
@@ -72,6 +112,7 @@ def build(rid: str, version: str | None = None) -> dict[str, Any]:
     return {
         "ok": bool(result["ok"] and om),
         "version": version,
+        "lane": "model",
         "artifacts": {"om": f"implement/{version}/artifacts/{base}.om"} if om else {},
         "exit_code": result.get("exit_code"),
         "log_path": f"implement/{version}/build.log",
