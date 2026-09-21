@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "version": "v1",
+  "source": "atc --log=info（任务包回传）",
+  "passes": [
+    {
+      "name": "BatchNormPreprocessFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": true,
+      "effect_times": 2,
+      "match_times": 2
+    },
+    {
+      "name": "ConvBatchnormFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": true,
+      "effect_times": 2,
+      "match_times": 2
+    },
+    {
+      "name": "FixPipeAbilityProcessPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": true,
+      "effect_times": 4,
+      "match_times": 4
+    },
+    {
+      "name": "TbeConvCommonRules0FusionPass",
+      "scope": "session_and_graph_id_0_0/ub_fusion",
+      "applied": true,
+      "effect_times": 4,
+      "match_times": 4
+    },
+    {
+      "name": "ARefreshCubeC0FusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "Conv2DFixPipeToExtendConv2DFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "Conv2dToConv2dV2FusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "ConvFormatRefreshFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "ConvToFullyConnectionFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "ConvWeightCompressFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "FIXPIPEAPREQUANTFUSIONPASS",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "FIXPIPEFUSIONPASS",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "RemoveCastFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 8
+    },
+    {
+      "name": "SameInputConv2dPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 3
+    },
+    {
+      "name": "StrideHoistingPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 4
+    },
+    {
+      "name": "TransdataCastFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 6
+    },
+    {
+      "name": "TransdataFz2FzgFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 2
+    },
+    {
+      "name": "TransdataFzg2FzFusionPass",
+      "scope": "session_and_graph_id_0_0/graph_fusion",
+      "applied": false,
+      "effect_times": 0,
+      "match_times": 2
+    }
+  ],
+  "overlap_with_ours": []
+}
