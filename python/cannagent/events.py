@@ -55,24 +55,44 @@ def deep_scrub(obj: Any) -> Any:
     return obj
 
 
-def _truncate(obj: Any) -> Any:
-    """§5：序列化后 >4KB 保留前 4KB + $truncated 标记（顶层替换）。"""
-    text = json.dumps(obj, ensure_ascii=False, default=str)
+def _spill(rid: str, seq_hint: str, field: str, text: str) -> str:
+    """全文落 run 目录 spill 文件，返回相对路径（full_ref）。"""
+    spill_dir = run_dir(rid) / "spill"
+    spill_dir.mkdir(parents=True, exist_ok=True)
+    path = spill_dir / f"tool-{seq_hint}-{field}.json"
+    path.write_text(text, encoding="utf-8")
+    return f"spill/tool-{seq_hint}-{field}.json"
+
+
+def _truncate_field(value: Any) -> tuple[Any, str | None]:
+    """单字段截断（§5 就地语义）：≤4KB 原样；超限返回 (truncated 对象, 全文)。
+
+    truncated 对象保留 $truncated/preview/size_bytes——full_ref 由调用方补
+    （需要 seq，spill 文件名按事件编号落位）。
+    """
+    text = json.dumps(value, ensure_ascii=False, default=str)
     if len(text.encode("utf-8")) <= TRUNCATE_BYTES:
-        return obj
+        return value, None
     return {
         "$truncated": True,
-        "preview": text[: TRUNCATE_BYTES // 2],
+        "preview": text[:TRUNCATE_BYTES],
         "size_bytes": len(text.encode("utf-8")),
-    }
+    }, text
 
 
 def _wall_ts() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
+_TOOL_KINDS = {"tool_started", "tool_completed", "tool_failed"}
+
+
 class EventWriter:
-    """一个 run 一个 writer；seq 进程内单调（按 events.jsonl 路径隔离，恢复场景从行数重放）。"""
+    """一个 run 一个 writer；seq 进程内单调（按 events.jsonl 路径隔离，恢复场景从行数重放）。
+
+    单写者约定（§5）：同一 run 的写入必须串行（loop 逐工具 await 子进程）；
+    本模块不保证多进程并发追加下的 seq 唯一性。
+    """
 
     def __init__(self, rid: str) -> None:
         self.rid = rid
@@ -89,12 +109,37 @@ class EventWriter:
             return sum(1 for _ in f)
 
     def append(self, kind: str, *, tool: dict[str, Any] | None = None, **fields: Any) -> int:
-        """追加一条事件；返回分配的 seq。字段契约见 observability §2。"""
+        """追加一条事件；返回分配的 seq。字段契约见 observability §2/§5.1。"""
         payload = _sanitize({"kind": kind, "tool": tool, **fields})
-        payload = _truncate(payload)
+        tool_payload = payload.get("tool") if isinstance(payload.get("tool"), dict) else None
+
         with _LOCK:
             _SEQ[self._seq_key] += 1
             seq = _SEQ[self._seq_key]
+
+            # §3：tool_* 事件的 invocation_id 强制存在（缺失即补全并落 note）
+            if kind in _TOOL_KINDS and tool_payload is not None and not tool_payload.get("invocation_id"):
+                tool_payload["invocation_id"] = f"inv-auto-{seq}"
+                existing: Any = payload.get("notes", [])
+                payload["notes"] = [
+                    *(existing if isinstance(existing, list) else []),
+                    "invocation_id 由写入函数补全（插件未提供）",
+                ]
+
+            # §5 就地截断：tool.input/output 各自处理；骨架字段不动
+            if tool_payload is not None:
+                for field_name in ("input", "output"):
+                    original = tool_payload.get(field_name)
+                    if original is None:
+                        continue
+                    truncated, full_text = _truncate_field(original)
+                    if full_text is not None:
+                        tool_payload[field_name] = truncated
+                        tool_payload[field_name]["full_ref"] = _spill(
+                            self.rid, str(seq), field_name, full_text
+                        )
+
+            # 顶层兜底：整行序列化仍超限（4×TRUNCATE_BYTES）时保留骨架字段截断 detail
             event = {
                 "run_id": self.rid,
                 "seq": seq,
@@ -102,8 +147,13 @@ class EventWriter:
                 "wall_ts": _wall_ts(),
                 **payload,
             }
+            line = json.dumps(event, ensure_ascii=False, default=str)
+            if len(line.encode("utf-8")) > TRUNCATE_BYTES * 4 and isinstance(event.get("detail"), str):
+                event["detail"] = event["detail"][:TRUNCATE_BYTES] + "…($truncated)"
+                line = json.dumps(event, ensure_ascii=False, default=str)
+
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
+                f.write(line + "\n")
                 f.flush()
         return seq
 

@@ -59,13 +59,18 @@
 | ATC 优化清单采集（C12） | ⬜ 规划 | D4 判定依据 |
 | golden 基线固化（E2） | ⬜ 规划 | benchmark §8 |
 
-## 3. 契约对齐跟踪（文档权威、代码跟进中）
+## 3. 契约对齐跟踪（文档权威、代码对齐）
 
-| 规范条目 | 差距 | 修复 PR |
+| 规范条目 | 差距 | 状态 |
 |---|---|---|
-| task-schema §1.1 `output` 可选字段 | TaskYamp 暂缺该字段（extra=forbid 拒收文档合法输入）；model/operator 互斥未强制 | 进行中 |
-| observability §2 `tool.invocation_id` 配对 | 插件未生成、python 未校验 | 进行中 |
-| observability §5 截断语义 | 当前整包替换为 `$truncated`（丢失 kind/stage 等）；应为 tool.input/output 就地截断 + full_ref | 进行中 |
-| plugin-dev §3/§6 子进程 env 白名单 | knowledge 插件未沿用（process.env 直传） | 进行中 |
-| workflow §2.2 route 决策持久化 | loop 插件未写 decision 事件/检查点 | 进行中 |
-| rag §4 治理命令 `show`/`edit` | 未实现 | 进行中 |
+| task-schema §1.1 `output` 可选字段 + model/operator 互斥 | 字段缺失、互斥未强制 | ✅ 已修复（含互斥拒收测试） |
+| observability §2 `tool.invocation_id` 配对 | 插件未生成、python 未校验 | ✅ 已修复（exec.callId 直通；缺失自动补全+note；端到端配对实测） |
+| observability §5 截断语义 | 整包替换丢失骨架字段 | ✅ 已修复（tool.input/output 就地截断 + spill 文件 full_ref；骨架字段保留有测试） |
+| plugin-dev §3 子进程 env 白名单 | knowledge 插件 process.env 直传 | ✅ 已修复（复用共享 forward/allowlistedEnv，workspace 依赖） |
+| workflow §2.2 route 决策持久化 | 未写 decision 事件/检查点 | ✅ 已修复（await 持久化；端到端 tool_started→decision→tool_completed 实测） |
+| rag §4 治理命令 `show`/`edit` | 未实现 | ✅ 已修复（edit 过 schema 重校验，非法编辑拒收） |
+
+附带发现并修复（审查未覆盖）：
+- **Windows 子进程编码**：最小 env 下 python 按 GBK 解码 stdin → 孤立代理对 → UTF-8 写入崩溃——`forward()` 注入 `PYTHONUTF8=1`/`PYTHONIOENCODING=utf-8` + CLI 流重配置双保险（中文 reason 端到端实测存活）
+- `CANNAGENT_WORKSPACE` 加入 env 白名单（子进程工作区定位）
+- pytest 全局 timeout=120（防无限流用例拖死 CI）

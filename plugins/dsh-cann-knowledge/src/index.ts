@@ -6,6 +6,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { allowlistedEnv, forward } from '@cannagent/dsh-cann-tools'
 
 export const name = 'cann-knowledge'
 export const inject = ['tools']
@@ -19,44 +20,6 @@ export const Config: z<PluginConfig> = z.object({
   python: z.string(),
   module: z.string(),
 })
-
-/** 与 dsh-cann-tools 相同的受控转发（骨架期局部复制；稳定后上移共享包） */
-async function forwardSubcommand(
-  subcommand: string,
-  payload: unknown,
-  config: PluginConfig,
-  timeoutMs: number,
-): Promise<{ ok: boolean; value?: unknown; error?: string }> {
-  const { spawn } = await import('node:child_process')
-  const python = config.python ?? 'python'
-  const module = config.module ?? 'cannagent'
-  return new Promise(resolve => {
-    const child = spawn(python, ['-m', module, subcommand], {
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-    let stdout = ''
-    let stderr = ''
-    const timer = setTimeout(() => { child.kill() }, timeoutMs)
-    child.stdout.on('data', c => { stdout += c })
-    child.stderr.on('data', c => { stderr += c })
-    child.on('close', code => {
-      clearTimeout(timer)
-      if (code !== 0) {
-        resolve({ ok: false, error: stderr.trim() || `python exited ${code}` })
-        return
-      }
-      try {
-        resolve({ ok: true, value: JSON.parse(stdout) })
-      } catch {
-        resolve({ ok: false, error: `bad json output: ${stdout.slice(0, 200)}` })
-      }
-    })
-    child.stdin.write(JSON.stringify(payload ?? {}))
-    child.stdin.end()
-  })
-}
 
 export function apply(ctx: Context, config: PluginConfig): void {
   ctx.tools.register(defineTool({
@@ -86,7 +49,12 @@ export function apply(ctx: Context, config: PluginConfig): void {
       }],
     },
     async execute(args: Record<string, unknown>) {
-      const result = await forwardSubcommand('knowledge', { op: 'retrieve', ...args }, config, 120_000)
+      const result = await forward('knowledge', { op: 'retrieve', ...args }, {
+        ...(config.python === undefined ? {} : { python: config.python }),
+        ...(config.module === undefined ? {} : { module: config.module }),
+        timeoutMs: 120_000,
+        env: allowlistedEnv(),
+      })
       if (!result.ok) {
         return { results: [], warning: `检索不可用：${result.error ?? 'unknown'}` } as never
       }
@@ -120,7 +88,12 @@ export function apply(ctx: Context, config: PluginConfig): void {
       }],
     },
     async execute(args: Record<string, unknown>) {
-      const result = await forwardSubcommand('knowledge', { op: 'experience_write', ...args }, config, 60_000)
+      const result = await forward('knowledge', { op: 'experience_write', ...args }, {
+        ...(config.python === undefined ? {} : { python: config.python }),
+        ...(config.module === undefined ? {} : { module: config.module }),
+        timeoutMs: 60_000,
+        env: allowlistedEnv({ CANNAGENT_RUN_ID: String(args['run_id'] ?? '') }),
+      })
       if (!result.ok) {
         throw new Error(JSON.stringify({
           code: 'CANN_E_PYTHON_EXIT',

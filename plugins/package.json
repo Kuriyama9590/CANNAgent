@@ -10,7 +10,8 @@
     "build": "tsc -b dsh-cann-tools dsh-cann-knowledge dsh-cann-loop",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc -b --dry false dsh-cann-tools dsh-cann-knowledge dsh-cann-loop"
+    "typecheck": "tsc -b --dry false dsh-cann-tools dsh-cann-knowledge dsh-cann-loop",
+    "test:schema": "vitest run dsh-cann-tools/src/whitelist.test.ts"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

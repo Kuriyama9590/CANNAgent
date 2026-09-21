@@ -69,15 +69,22 @@ class TaskYaml(StrictModel):
     operator: OperatorSpec | None = None
     constraints: Constraints = Field(default_factory=Constraints)
     target: Target
+    output: dict[str, object] | None = None  # 交付要求覆盖（task-schema §1.1，自由键值）
     baseline: Baseline = Field(default_factory=Baseline)
     budgets: Budgets = Field(default_factory=Budgets)
 
     @model_validator(mode="after")
     def _check_type_fields(self) -> TaskYaml:
-        if self.task_type == "model" and self.model is None:
-            raise ValueError("task_type=model 需要 model 段")
-        if self.task_type == "operator" and self.operator is None:
-            raise ValueError("task_type=operator 需要 operator 段")
+        if self.task_type == "model":
+            if self.model is None:
+                raise ValueError("task_type=model 需要 model 段")
+            if self.operator is not None:
+                raise ValueError("task_type=model 不允许携带 operator 段（互斥，task-schema §1.1）")
+        else:
+            if self.operator is None:
+                raise ValueError("task_type=operator 需要 operator 段")
+            if self.model is not None:
+                raise ValueError("task_type=operator 不允许携带 model 段（互斥，task-schema §1.1）")
         return self
 
 

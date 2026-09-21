@@ -188,9 +188,15 @@ class KnowledgeStore:
 
     # ---- 治理（D5 人工增删查改）----
 
-    def list(self, corpus: str = "experience", status: str | None = None) -> list[dict[str, Any]]:
-        where = "corpus = ?"
-        params: list[Any] = [corpus]
+    def list(
+        self,
+        corpus: str = "experience",
+        status: str | None = None,
+        include_all: bool = False,
+    ) -> list[dict[str, Any]]:
+        """治理视图：默认按 corpus；include_all=True 跨 corpus 全量（edit 取原条目用）。"""
+        where = "1=1" if include_all else "corpus = ?"
+        params: list[Any] = [] if include_all else [corpus]
         if status:
             where += " AND status = ?"
             params.append(status)

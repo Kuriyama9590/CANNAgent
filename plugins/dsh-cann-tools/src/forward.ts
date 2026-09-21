@@ -27,13 +27,18 @@ export interface ForwardOptions {
 }
 
 /** 子进程环境白名单（C11 骨架；凭据类由 python 侧 .env 自取，不经过本层） */
-const ENV_ALLOWLIST = ['CANNAGENT_RUN_ID', 'CANNAGENT_STAGE', 'DSH_HOME'] as const
+// 运行定位变量（非凭据）：workspace 根 / run 归属 / 阶段 / dsh home
+const ENV_ALLOWLIST = ['CANNAGENT_WORKSPACE', 'CANNAGENT_RUN_ID', 'CANNAGENT_STAGE', 'DSH_HOME'] as const
 
 export function allowlistedEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const key of ENV_ALLOWLIST) {
     if (process.env[key] !== undefined) out[key] = process.env[key]
   }
+  // 编码钉死（行为变量，非凭据）：Windows 最小 env 下 python 默认按本地代码页（GBK）
+  // 解码 stdin，中文/箭头等会变孤立代理对，UTF-8 写回即崩溃——实测于 C 审查修复冒烟
+  out.PYTHONUTF8 = '1'
+  out.PYTHONIOENCODING = 'utf-8'
   return { ...out, ...extra }
 }
 

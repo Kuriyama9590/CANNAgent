@@ -7,8 +7,14 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
-    "./state-machine": { "types": "./lib/state-machine.d.ts", "default": "./lib/state-machine.js" }
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./state-machine": {
+      "types": "./lib/state-machine.d.ts",
+      "default": "./lib/state-machine.js"
+    }
   },
   "scripts": {
     "build": "tsc -b"
@@ -16,5 +22,8 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
+  },
+  "dependencies": {
+    "@cannagent/dsh-cann-tools": "workspace:*"
   }
 }
