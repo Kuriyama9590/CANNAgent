@@ -48,11 +48,43 @@ def test_runs_create_via_cli(workspace):
     assert out["run_id"].startswith("r20")
 
 
-def test_not_implemented_subcommand_structured(workspace, run_id):
-    # build 已真实现（C5），占位语义用 code-gen 验证
-    code, out = run_cli(["code-gen"], {"run_id": run_id, "op_task_id": "T-1"})
+def test_unsupported_approach_structured(workspace):
+    # 七阶段域已真实现；不支持路线返回结构化 CANN_E_APPROACH_UNSUPPORTED（诚实占位）
+    from cannagent.runs import create_run
+    from cannagent.task_schema import TaskYaml
+
+    root = create_run(
+        TaskYaml.model_validate(
+            {
+                "schema_version": "1.0",
+                "task_type": "model",
+                "task_name": "cli 占位语义",
+                "model": {"path": "input/a.onnx", "opset": 13, "input_shape": [64, 64]},
+                "target": {"gain_pct": 10},
+            }
+        )
+    )
+    (root / "identify" / "op_list.json").write_text(
+        json.dumps({"schema_version": "1.0", "model": {}, "nodes": [], "stats": {}}),
+        encoding="utf-8",
+    )
+    (root / "identify" / "fusion_candidates.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "candidates": [
+                    {"id": "F001", "pattern": "Conv+BN", "node_idx": [0, 1],
+                     "est_gain_pct": 0.0, "status": "pending"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    code, out = run_cli(["strategy-gen"], {"run_id": root.name})
+    assert code == 0 and out["strategy"]["selected"] == ["F001"]
+    code, out = run_cli(["code-gen"], {"run_id": root.name})
     assert code == 1
-    assert out["ok"] is False and out["code"] == "CANN_E_NOT_IMPLEMENTED"
+    assert out["ok"] is False and out["code"] == "CANN_E_APPROACH_UNSUPPORTED"
 
 
 def test_invalid_stdin_structured_error():

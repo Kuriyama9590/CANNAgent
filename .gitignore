@@ -35,3 +35,6 @@ Thumbs.db
 python/cannagent.egg-info/
 python/build/
 *.egg-info/
+workspace-e2e/
+workspace-smoke/
+web/.vite/

@@ -12,11 +12,13 @@ from .config import run_dir
 from .task_schema import FusionCandidate, FusionCandidates, OpList, OpNode, TaskYaml
 
 # 常见融合模式（骨架版规则表；strategy 阶段与 RAG 历史共同作用，此处只做图模式命中）
+# Mul+Add = 标量仿射（BN 推理式/缩放偏置）——v1 codegen 仿射融合路线的命中面
 _FUSION_PATTERNS: list[tuple[str, list[str]]] = [
     ("Conv+BN+ReLU", ["Conv", "BatchNormalization", "Relu"]),
     ("Conv+BN", ["Conv", "BatchNormalization"]),
     ("MatMul+Add", ["MatMul", "Add"]),
     ("MatMul+Gelu+Add", ["MatMul", "Gelu", "Add"]),
+    ("Mul+Add", ["Mul", "Add"]),
 ]
 
 

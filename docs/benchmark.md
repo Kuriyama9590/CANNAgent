@@ -29,6 +29,7 @@
 - **误差口径**：`rel_err = |out_opt − out_ref| / (|out_ref| + eps)`，逐元素计算后取**全用例最大值** `max_rel_err`；`eps = 1e-6` 防除零；fp16 任务参考值用 fp32 累加的官方实现输出
 - **达标判定（硬卡点，D10）**：`max_rel_err ≤ threshold` 且 `failures` 为空（threshold 缺省 `1e-3`，task.yaml 可覆盖）；未达标 = verify 不通过，走 workflow 转移规则（回 implement / strategy）
 - **无噪声假设**：verify 固定 seed + 同卡执行，误差不容差（区别于 bench 的 ε，§6）
+- **近零分母注意**：纯相对误差口径在输出过零点（|y_ref| 极小）会把 fp32 量级的舍入差（~1 ulp）放大到缺省阈值之上；此时按上述覆盖机制在 task.yaml `output.precision_threshold` 显式设定该算子语义下的合理阈值（附量级依据），不修改误差公式本身
 
 ## 4. 性能测量（bench）
 

@@ -122,6 +122,39 @@ class FusionCandidates(StrictModel):
     candidates: list[FusionCandidate] = Field(default_factory=list)
 
 
+# ---- strategy 产物（workflow §2.1） ----
+
+
+class StrategyTask(StrictModel):
+    op_task_id: str
+    candidate_id: str
+    approach: str
+    target_gain_pct: float
+    risk: Literal["low", "mid", "high"]
+    order: int
+
+
+class StrategyRejected(StrictModel):
+    candidate_id: str
+    reason: str
+
+
+class StrategyReport(StrictModel):
+    schema_version: str = "1.0"
+    selected: list[str]
+    tasks: list[StrategyTask]
+    rejected: list[StrategyRejected] = Field(default_factory=list)
+    fallback: str = ""
+
+    @model_validator(mode="after")
+    def _selected_covered(self) -> StrategyReport:
+        have = {t.candidate_id for t in self.tasks}
+        for cid in self.selected:
+            if cid not in have:
+                raise ValueError(f"selected 候选 {cid} 缺少对应 tasks 项（workflow §2.1 校验点）")
+        return self
+
+
 # ---- verify / bench 产物（workflow §2.1；口径见 benchmark.md） ----
 
 

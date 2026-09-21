@@ -112,7 +112,7 @@ class RemoteRunner:
             sftp = client.open_sftp()
             for rel, content in files.items():
                 remote = f"{stage}/in/{rel}"
-                sftp.mkdir(remote.rsplit("/", 1)[0]) if "/" in rel else None
+                _sftp_mkdirs(sftp, remote.rsplit("/", 1)[0]) if "/" in rel else None
                 with sftp.file(remote, "w") as f:
                     f.write(content)
             sftp.close()
@@ -170,6 +170,21 @@ def shquote(s: str) -> str:
     return "'" + s.replace("'", "'\\''") + "'"
 
 
+def _sftp_mkdirs(sftp: Any, remote_dir: str) -> None:
+    """逐级建目录（SFTP mkdir 非递归；保持绝对/相对语义；已存在/竞态忽略）。"""
+    absolute = remote_dir.startswith("/")
+    cur = ""
+    for part in (p for p in remote_dir.split("/") if p):
+        cur = ("/" if absolute else "") + part if not cur else f"{cur}/{part}"
+        try:
+            sftp.stat(cur)
+        except OSError:
+            try:
+                sftp.mkdir(cur)
+            except OSError:
+                pass
+
+
 def npu_idle_check(runner: RemoteRunner) -> dict[str, Any]:
     """环境指纹（benchmark §2）：device/工具链/占用快照。"""
     client = runner._connect()
@@ -185,7 +200,12 @@ def npu_idle_check(runner: RemoteRunner) -> dict[str, Any]:
         )
         info: dict[str, Any] = {"raw": out}
         m = re.search(r"Ascend\d+\w+", out)
-        if m:
+        if not m:
+            # npu-smi 新版 Name 列只给芯片型号（如 910B）——补 Ascend 前缀
+            m2 = re.search(r"\b(9\d{2}[A-Z]\d?)\b", out)
+            if m2:
+                info["device"] = f"Ascend{m2.group(1)}"
+        else:
             info["device"] = m.group(0)
         m = re.search(r"(cann-[\d.]+)", out)
         if m:
