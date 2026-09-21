@@ -1,9 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import * as echarts from 'echarts';
+// 按需引入（替代 echarts 全量 ~1MB）：本图只用 bar + grid/tooltip/legend + canvas
+import * as echarts from 'echarts/core';
+import { BarChart } from 'echarts/charts';
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import { Statistic, Typography } from 'antd';
 import type { BenchData } from '../types';
 import { pct } from '../util/format';
 import { useDark } from '../theme';
+
+echarts.use([BarChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
 
 interface Props {
   data: BenchData;
