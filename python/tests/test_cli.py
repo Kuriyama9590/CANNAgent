@@ -49,7 +49,8 @@ def test_runs_create_via_cli(workspace):
 
 
 def test_not_implemented_subcommand_structured(workspace, run_id):
-    code, out = run_cli(["build"], {"run_id": run_id, "version": "v1"})
+    # build 已真实现（C5），占位语义用 code-gen 验证
+    code, out = run_cli(["code-gen"], {"run_id": run_id, "op_task_id": "T-1"})
     assert code == 1
     assert out["ok"] is False and out["code"] == "CANN_E_NOT_IMPLEMENTED"
 

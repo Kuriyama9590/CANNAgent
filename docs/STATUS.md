@@ -13,7 +13,7 @@
 | python/cannagent | 🟡 骨架 | CLI/events/runs/checkpoint/identify/knowledge 可用；strategy→deliver 域为占位 |
 | web-demo/ | ✅ 可用 | 交互评审定稿（模拟剧本，零后端） |
 | web/ 真实 dashboard | ✅ 可用 | 消费 C7 FastAPI + SSE |
-| 远程执行（昇腾服务器） | ⬜ 规划 | C5/C12/E2，需 910B 环境 |
+| 远程执行（昇腾服务器） | ✅ 可用 | C5/C12 实测通过（任务包 + ATC 编译 + 清单回传）；E2 待做 |
 
 ## 2. 能力矩阵（规范条目 → 实现）
 
@@ -27,7 +27,7 @@
 | `parse-model` / `op-profile` / `fusion-scan` | ✅ 可用 | 真实 ONNX 图枚举；D3 全链路实测 |
 | `knowledge`（retrieve/experience_write/list/approve/reject/delete/add） | ✅ 可用 | rag §4/§6；show/edit 代码跟进中 |
 | `strategy-gen` / `code-gen` / `patch-code` | 🟫 占位 | `CANN_E_NOT_IMPLEMENTED` |
-| `build` / `analyze-error` | 🟫 占位 | 依赖 C5（远程任务包） |
+| `build` | ✅ 可用 | C5 真实现：ATC 任务包端到端（om 回传 + C12 清单）；analyze-error 仍占位 |
 | `gen-test` / `run-test` / `analyze-accuracy` | 🟫 占位 | verify 链路（aclnn 基线，远程） |
 | `bench-setup` / `run-bench` | 🟫 占位 | benchmark §4 三份对照（远程） |
 | `package` / `gen-report` | 🟫 占位 | deliver 链路 |
@@ -55,8 +55,9 @@
 
 | 能力 | 状态 | 备注 |
 |---|---|---|
-| build 编译链路（C5） | ⬜ 规划 | 任务包下发/结果包回传（D9） |
-| ATC 优化清单采集（C12） | ⬜ 规划 | D4 判定依据 |
+| 任务包派发（remote.RemoteRunner） | ✅ 可用 | SSH+SFTP 组包/执行/回传；NPU 目录锁（D6 v1）；环境锚定 conda cannagent |
+| build ATC 编译（C5） | ✅ 可用 | **实测**：resblock.onnx → 服务器 atc → om 回传落盘（ATC run success） |
+| ATC 优化清单（C12） | ✅ 可用 | **实测**：fusion_result.json 权威解析 → atc_opt_list_v1.json（18 pass / 4 生效） |
 | golden 基线固化（E2） | ⬜ 规划 | benchmark §8 |
 
 ## 3. 契约对齐跟踪（文档权威、代码对齐）

@@ -138,6 +138,21 @@ def _handler_fusion_scan() -> Callable[[dict[str, Any]], dict[str, Any]]:
     return handler
 
 
+def _handler_build() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def handler(args: dict[str, Any]) -> dict[str, Any]:
+        from .build import build
+        from .remote import RemoteError
+
+        rid = str(args.get("run_id", ""))
+        version = args.get("version")
+        try:
+            return build(rid, str(version) if isinstance(version, str) else None)
+        except RemoteError as exc:
+            return {"ok": False, "code": exc.code, "message": str(exc), "hint": "检查 .env 的 CANN_SERVER_*"}
+
+    return handler
+
+
 def _handler_knowledge() -> Callable[[dict[str, Any]], dict[str, Any]]:
     def handler(args: dict[str, Any]) -> dict[str, Any]:
         from .knowledge import handle
@@ -157,11 +172,11 @@ SUBCOMMANDS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "op-profile": _handler_op_profile(),
     "fusion-scan": _handler_fusion_scan(),
     "knowledge": _handler_knowledge(),
+    "build": _handler_build(),
     # 结构化占位（后续任务交付）
     "strategy-gen": _not_implemented("strategy-gen", "C4 后续/C6 RAG 接入"),
     "code-gen": _not_implemented("code-gen", "C5 build 链路"),
     "patch-code": _not_implemented("patch-code", "C5"),
-    "build": _not_implemented("build", "C5（任务包下发昇腾服务器）"),
     "analyze-error": _not_implemented("analyze-error", "C5"),
     "gen-test": _not_implemented("gen-test", "C5/verify 链路"),
     "run-test": _not_implemented("run-test", "C5（aclnn 基线对照，benchmark §3）"),

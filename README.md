@@ -69,4 +69,4 @@ cd web && npm ci && npm run dev             # :5174，/api 已代理
 
 **唯一状态源：[docs/STATUS.md](docs/STATUS.md)（实现状态矩阵：可用 / 骨架 / 占位 / 规划 / 远程）**——本节不重复细节，只给一句话定位：
 
-- 阶段①②已完成；阶段③ 进行中：**C1–C4 / C6 / C7 / C8 / C9 / C11 已合入**（identify 端到端 + 观测服务 + 真实 dashboard 实测），七阶段其余域为占位，详见 [STATUS §2](docs/STATUS.md)
+- 阶段①②已完成；阶段③ 主体完成：**C1–C12 骨架链路全部合入**——identify 端到端、观测服务 + dashboard、**C5 远程 ATC 编译实测（om 回传）**、**C12 清单实测（4 pass 生效）**；verify/bench/deliver 域与 golden（E2）待做，详见 [STATUS §2](docs/STATUS.md)
