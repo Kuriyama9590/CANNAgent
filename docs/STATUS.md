@@ -44,7 +44,7 @@
 | 15 工具表注册 + python 转发（D3） | ✅ 可用 | 真实 dsh 加载冒烟通过 |
 | 工具边界事件拦截（D2 双写） | ✅ 可用 | tools/execute waterfall；C2/C4 实测 |
 | C11 白名单闸门（pre-execute deny） | ✅ 可用 | pwsh 拒绝实测；一致性测试 CI 把关 |
-| 状态机边集/route 工具（dsh-cann-loop） | 🟡 骨架 | 边集与兜底可用；decision 事件/检查点持久化代码跟进中 |
+| 状态机边集/route 工具 + session 编排（dsh-cann-loop） | ✅ 可用 | 边集/兜底/decision 持久化 + 编排器（manifest 注入/token 滚转/墙钟降级/80% 软提醒）+ `cann-loop-run` bin；真实 LLM 会话冒烟通过（identify 全链：dsh→模型→插件→CLI→产物+事件 134 条） |
 | knowledge 插件白名单转发 | 🟡 代码跟进中 | 当前 process.env 直传（与 security §1 第三层不一致，修复中） |
 
 ### 服务与前端
