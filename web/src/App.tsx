@@ -12,7 +12,8 @@ import zhCN from 'antd/locale/zh_CN';
 import { SimProvider } from './engine/store';
 import { ThemeCtx, ACCENT } from './theme';
 import Dashboard from './pages/Dashboard';
-import RunDetail from './pages/RunDetail';
+// 明细页懒加载（首屏只打包 Dashboard；hash 路由切换时按需拉取）
+const RunDetail = React.lazy(() => import('./pages/RunDetail'));
 
 type Route = { page: 'dashboard' } | { page: 'run'; id: string };
 
@@ -116,7 +117,15 @@ const Shell: React.FC = () => {
               />
             </Layout.Header>
             <Layout.Content style={{ padding: '18px 22px', minHeight: 'calc(100vh - 52px)' }}>
-              {route.page === 'dashboard' ? <Dashboard /> : <RunDetail id={route.id} />}
+              {route.page === 'dashboard' ? (
+                <Dashboard />
+              ) : (
+                <React.Suspense
+                  fallback={<Typography.Text type="secondary">加载中…</Typography.Text>}
+                >
+                  <RunDetail id={route.id} />
+                </React.Suspense>
+              )}
             </Layout.Content>
           </Layout>
         </AntdApp>
