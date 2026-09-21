@@ -12,7 +12,7 @@
 | plugins/ 三插件 | 🟡 骨架 | 工具表/白名单/状态机边集可用；route 持久化、knowledge 白名单转发 = 代码跟进中 |
 | python/cannagent | 🟡 骨架 | CLI/events/runs/checkpoint/identify/knowledge 可用；strategy→deliver 域为占位 |
 | web-demo/ | ✅ 可用 | 交互评审定稿（模拟剧本，零后端） |
-| web/ 真实 dashboard | ⬜ 规划 | 由 web-demo 演进，消费 C7 FastAPI |
+| web/ 真实 dashboard | ✅ 可用 | 消费 C7 FastAPI + SSE |
 | 远程执行（昇腾服务器） | ⬜ 规划 | C5/C12/E2，需 910B 环境 |
 
 ## 2. 能力矩阵（规范条目 → 实现）
@@ -48,8 +48,8 @@
 
 | 能力 | 状态 | 备注 |
 |---|---|---|
-| FastAPI 观测服务（C7） | 🟡 开发中 | 契约 = observability §5 消费面 |
-| 真实 dashboard（C8） | ⬜ 规划 | — |
+| FastAPI 观测服务（C7） | ✅ 可用 | runs 列表/详情/增量事件/SSE/产物服务；契约测试 + 真实 uvicorn 冒烟 |
+| 真实 dashboard（C8） | ✅ 可用 | web/（demo 演进）：API+SSE 接入、回放游标、浏览器实测（含 decision 事件渲染） |
 
 ### 远程（昇腾 910B 服务器）
 

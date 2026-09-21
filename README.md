@@ -16,8 +16,8 @@ docs/        规范文档：SPEC / workflow / observability / task-schema / benc
 plugins/     dsh 插件 workspace：dsh-cann-tools / dsh-cann-knowledge / dsh-cann-loop（pnpm + tsc + vitest）
 python/      cannagent 领域执行层：CLI 子命令 + events 唯一写入 + pydantic 权威 schema（pytest + ruff + mypy strict）
 web-demo/    前端交互评审 demo（React + Vite + TS + AntD v5 + ECharts，零后端）
+web/         真实 dashboard（消费 C7 观测服务 API + SSE；vite 代理 /api）
 profiles/   三协议模型端点配置（openai-completions 实测 / anthropic-messages / openai-responses）
-（规划中）web/        真实 dashboard（由 web-demo 演进）
 ```
 
 ## 快速开始
@@ -33,6 +33,10 @@ cd python && pip install -e ".[dev,onnx]" && pytest -q
 
 # ③ 插件 workspace（构建 + 测试 + lint）
 cd plugins && pnpm install && pnpm build && pnpm test
+
+# ④ 真实 dashboard（需先启动观测服务）
+cd python && python -m cannagent.server &   # :8300
+cd web && npm ci && npm run dev             # :5174，/api 已代理
 ```
 
 > 三者串成端到端（dsh 模型 → 插件 → CLI）的加载方法见 `plugins/README.md` 与 `docs/spikes/`。当前端到端覆盖 identify 阶段；七阶段全流程状态见 [STATUS](docs/STATUS.md)。
@@ -65,4 +69,4 @@ cd plugins && pnpm install && pnpm build && pnpm test
 
 **唯一状态源：[docs/STATUS.md](docs/STATUS.md)（实现状态矩阵：可用 / 骨架 / 占位 / 规划 / 远程）**——本节不重复细节，只给一句话定位：
 
-- 阶段①（demo）与阶段②（八篇规范）已完成；阶段③ 进行中：**C1–C4 / C6 / C9 / C11 已合入**（identify 端到端实测），七阶段其余域为占位，详见 [STATUS §2](docs/STATUS.md)
+- 阶段①②已完成；阶段③ 进行中：**C1–C4 / C6 / C7 / C8 / C9 / C11 已合入**（identify 端到端 + 观测服务 + 真实 dashboard 实测），七阶段其余域为占位，详见 [STATUS §2](docs/STATUS.md)
