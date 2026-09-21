@@ -174,6 +174,10 @@ SUBCOMMANDS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows 控制台代码页防御：stdin/stdout 一律 UTF-8（与插件侧 PYTHONUTF8 双保险）
+    for stream in (sys.stdin, sys.stdout):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(prog="cannagent", description="CannAgent 领域执行层 CLI")
     parser.add_argument("subcommand", choices=sorted(SUBCOMMANDS))
     parser.add_argument(

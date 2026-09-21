@@ -1,10 +1,6 @@
-/**
- * @cannagent/dsh-cann-tools — 领域工具插件（plugin-dev.md §1/§3/§4）。
- * 零业务逻辑：注册工具表 → pre-execute 白名单闸门（C11）→ python CLI 转发（D3）
- * → 工具边界事件拦截（C2 定案：pre-execute + result 双钩子，经 python events append）。
- */
 import type { Context } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
+export { forward, allowlistedEnv } from './forward.js';
 export declare const name = "cann-tools";
 export declare const inject: string[];
 export interface PluginConfig {
@@ -23,6 +19,7 @@ export interface ToolEventPayload {
     run_id: string;
     kind: 'tool_started' | 'tool_completed' | 'tool_failed';
     tool: {
+        invocation_id?: string;
         name: string;
         input?: unknown;
         output?: unknown;

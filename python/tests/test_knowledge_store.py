@@ -113,3 +113,77 @@ def test_retrieve_via_cli_roundtrip(workspace):
     results = json.loads(p2.stdout)["results"]
     assert len(results) == 1
     assert results[0]["payload"]["problem"].startswith("MatMul")
+
+
+def test_show_and_edit_governance(store):
+    store.upsert(make_entry(eid="exp-20260920-00000003"))
+    # show：默认检索面（approved）可见
+    hits = store.retrieve("Conv")
+    assert hits and hits[0]["ref"] == "rag://exp-20260920-00000003"
+    # edit 经 CLI 层（op_edit）覆盖字段并重校验——这里验证底层 upsert 幂等覆盖
+    revised = make_entry(eid="exp-20260920-00000003", solution="修订后的方案")
+    store.upsert(revised)
+    payload = store.list(include_all=True)[0]
+    assert payload["solution"] == "修订后的方案"
+
+
+def test_edit_via_cli_roundtrip(workspace):
+    """op_edit：取条目 → 覆盖 → 重新校验入库；非法编辑被 schema 拒绝。"""
+    import json
+    import os
+    import subprocess
+    import sys
+
+    env = {**os.environ, "CANNAGENT_WORKSPACE": str(workspace)}
+    add = {
+        "op": "add",
+        "problem": "GELU 融合",
+        "context": {"dtype": "fp16", "device": "Ascend910B"},
+        "solution": "v1 方案",
+        "outcome": {"status": "success", "gain_pct": 3.0},
+        "reuse_when": "GELU 场景",
+    }
+    p1 = subprocess.run(
+        [sys.executable, "-m", "cannagent", "knowledge"],
+        input=json.dumps(add),
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+    eid = json.loads(p1.stdout)["id"]
+
+    edit = {"op": "edit", "id": eid, "solution": "v2 修订"}
+    p2 = subprocess.run(
+        [sys.executable, "-m", "cannagent", "knowledge"],
+        input=json.dumps(edit),
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+    assert p2.returncode == 0
+
+    show = {"op": "show", "id": eid}
+    p3 = subprocess.run(
+        [sys.executable, "-m", "cannagent", "knowledge"],
+        input=json.dumps(show),
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+    entry = json.loads(p3.stdout)["entry"]
+    assert entry["solution"] == "v2 修订"
+
+    bad_edit = {"op": "edit", "id": eid, "context": {"dtype": "fp16"}}  # 缺 device → schema 拒
+    p4 = subprocess.run(
+        [sys.executable, "-m", "cannagent", "knowledge"],
+        input=json.dumps(bad_edit),
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=60,
+    )
+    out4 = json.loads(p4.stdout)
+    assert out4["ok"] is False and "schema" in out4["message"]

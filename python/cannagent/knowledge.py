@@ -16,7 +16,7 @@ from .config import run_dir
 from .knowledge_store import KnowledgeStore, now_iso
 from .task_schema import ExperienceEntry, ExperienceOutcome
 
-OPS = "retrieve | experience_write | list | approve | reject | delete | add"
+OPS = "retrieve | experience_write | list | show | approve | reject | edit | delete | add"
 
 
 def handle(args: dict[str, object]) -> dict[str, object]:
@@ -25,8 +25,10 @@ def handle(args: dict[str, object]) -> dict[str, object]:
         "retrieve": retrieve,
         "experience_write": experience_write,
         "list": op_list,
+        "show": op_show,
         "approve": lambda a: op_status(a, "approved"),
         "reject": lambda a: op_status(a, "rejected"),
+        "edit": op_edit,
         "delete": op_delete,
         "add": op_add,
     }.get(op)
@@ -112,6 +114,43 @@ def op_list(args: dict[str, object]) -> dict[str, object]:
     )
     store.close()
     return {"count": len(entries), "entries": entries}
+
+
+def op_show(args: dict[str, object]) -> dict[str, object]:
+    store = KnowledgeStore()
+    entries = store.list()
+    store.close()
+    for entry in entries:
+        if entry.get("id") == str(args.get("id", "")):
+            return {"entry": entry}
+    return {"ok": False, "code": "CANN_E_NOT_FOUND", "message": f"entry {args.get('id')!r} not found"}
+
+
+def op_edit(args: dict[str, object]) -> dict[str, object]:
+    """人工编辑（D5）：按 id 取原条目 → 覆盖给出的字段 → 重新校验入库。"""
+    entry_id = str(args.get("id", ""))
+    store = KnowledgeStore()
+    entries = store.list(include_all=True)
+    original = next((e for e in entries if e.get("id") == entry_id), None)
+    if original is None:
+        store.close()
+        return {"ok": False, "code": "CANN_E_NOT_FOUND", "message": f"entry {entry_id!r} not found"}
+    merged = {
+        **original,
+        **{
+            k: v
+            for k, v in args.items()
+            if k in ("problem", "context", "root_cause", "solution", "outcome", "reuse_when", "status")
+        },
+    }
+    try:
+        entry = ExperienceEntry.model_validate(merged)
+    except Exception as exc:  # noqa: BLE001 —— 编辑结果必须过 schema（rag §3）
+        store.close()
+        return {"ok": False, "code": "CANN_E_BAD_OUTPUT", "message": f"schema 校验失败：{exc}"}
+    store.upsert(entry)
+    store.close()
+    return {"id": entry.id, "status": entry.status}
 
 
 def op_status(args: dict[str, object], status: str) -> dict[str, object]:

@@ -112,3 +112,15 @@ def test_experience_rules():
     # 人工条目可直接 approved
     manual = ExperienceEntry.model_validate(_experience_kwargs(source="manual", status="approved"))
     assert manual.status == "approved"
+
+
+def test_output_field_accepted():
+    t = TaskYaml.model_validate({**MODEL_TASK, "output": {"report_lang": "zh"}})
+    assert t.output == {"report_lang": "zh"}
+
+
+def test_model_operator_mutual_exclusion():
+    with pytest.raises(ValidationError, match="互斥"):
+        TaskYaml.model_validate({**MODEL_TASK, "operator": OPERATOR_TASK["operator"]})
+    with pytest.raises(ValidationError, match="互斥"):
+        TaskYaml.model_validate({**OPERATOR_TASK, "model": MODEL_TASK["model"]})

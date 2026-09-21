@@ -13,6 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 onnx = ["onnx>=1.15"]
 server = ["fastapi>=0.115", "uvicorn>=0.30"]
+bge = ["sentence-transformers>=3.0"]  # 生产态 embedder（rag.md §2；开发默认 hash）
 dev = [
     "pytest>=8.0",
     "ruff>=0.8",
@@ -42,3 +43,4 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+timeout = 120  # 防无限流/挂死用例拖死 CI

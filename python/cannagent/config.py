@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-WORKSPACE_ENV = "CANNAGENT_RUN_ID"
+WORKSPACE_ENV = "CANNAGENT_WORKSPACE"
 RUN_ID_ENV = "CANNAGENT_RUN_ID"
 
 DEFAULT_WORKSPACE = Path("workspace")

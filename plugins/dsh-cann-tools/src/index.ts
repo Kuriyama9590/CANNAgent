@@ -3,12 +3,15 @@
  * 零业务逻辑：注册工具表 → pre-execute 白名单闸门（C11）→ python CLI 转发（D3）
  * → 工具边界事件拦截（C2 定案：pre-execute + result 双钩子，经 python events append）。
  */
+import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { PreToolDecision, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { TOOL_SPECS } from './tool-table.js'
 import { appendEvent, forward, allowlistedEnv } from './forward.js'
+
+export { forward, allowlistedEnv } from './forward.js'
 import { ERROR_CODES } from './invariant.js'
 
 export const name = 'cann-tools'
@@ -37,6 +40,7 @@ export interface ToolEventPayload {
   run_id: string
   kind: 'tool_started' | 'tool_completed' | 'tool_failed'
   tool: {
+    invocation_id?: string
     name: string
     input?: unknown
     output?: unknown
@@ -67,6 +71,8 @@ function ridOf(exec: ToolExecLike): string {
 interface ToolExecLike {
   name: string
   arguments?: unknown
+  /** dsh 调用 id（工具事件 invocation_id 配对键；缺省由包装层生成 */
+  callId?: string
 }
 
 export function apply(ctx: Context, config: PluginConfig): void {
@@ -90,10 +96,12 @@ export function apply(ctx: Context, config: PluginConfig): void {
   // 事件在工具调用自身时间线内持久化，不依赖进程存活到 loop 排空）
   ctx.on('tools/execute', (exec: ToolExecLike, next: () => Promise<ToolExecutionResult>): Promise<ToolExecutionResult> => {
     const started = Date.now()
+    // observability §3：一次调用的稳定配对键（started/completed/failed 携带同一 id）
+    const invocationId = exec.callId ?? `inv-${randomUUID()}`
     return emit(config, {
       run_id: ridOf(exec),
       kind: 'tool_started',
-      tool: { name: exec.name, input: exec.arguments },
+      tool: { invocation_id: invocationId, name: exec.name, input: exec.arguments },
       severity: 'info',
     }).then(() => next()).then(
       value => {
@@ -111,6 +119,7 @@ export function apply(ctx: Context, config: PluginConfig): void {
         run_id: ridOf(exec),
         kind: failed ? 'tool_failed' : 'tool_completed',
         tool: {
+          invocation_id: invocationId,
           name: exec.name,
           duration_ms: Date.now() - started,
           output: failed ? { error: message } : { ok: true },
