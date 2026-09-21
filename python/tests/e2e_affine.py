@@ -32,8 +32,7 @@ def main() -> int:
                 "schema_version": "1.0",
                 "task_type": "model",
                 "task_name": "e2e-affine",
-                "model": {"path": f"input/{FIXTURE.name}", "opset": 13,
-                          "input_shape": [1024, 1024]},
+                "model": {"path": f"input/{FIXTURE.name}", "opset": 13, "input_shape": [1024, 1024]},
                 "constraints": {"dtype": "fp32"},
                 "target": {"gain_pct": 10},
                 "baseline": {"impl": "aclnn", "atc": "enabled"},
@@ -52,15 +51,19 @@ def main() -> int:
 
     out = parse_model(rid)
     candidates = out["fusion_candidates"]["candidates"]
-    print(f"[identify] nodes={out['op_list']['stats']['total_nodes']} "
-          f"candidates={[(c['id'], c['pattern']) for c in candidates]}")
+    print(
+        f"[identify] nodes={out['op_list']['stats']['total_nodes']} "
+        f"candidates={[(c['id'], c['pattern']) for c in candidates]}"
+    )
     assert any(c["pattern"] == "Mul+Add" for c in candidates), "fixture 应命中 Mul+Add"
 
     from cannagent.strategy import generate
 
     strat = generate(rid)["strategy"]
-    print(f"[strategy] selected={strat['selected']} "
-          f"approach={strat['tasks'][0]['approach']} target=+{strat['tasks'][0]['target_gain_pct']}%")
+    print(
+        f"[strategy] selected={strat['selected']} "
+        f"approach={strat['tasks'][0]['approach']} target=+{strat['tasks'][0]['target_gain_pct']}%"
+    )
 
     from cannagent.codegen import code_gen
 
@@ -85,8 +88,10 @@ def main() -> int:
         print(json.dumps(v, ensure_ascii=False, default=str))
         return 1
     acc = v["accuracy"]
-    print(f"[verify] {acc['passed']}/{acc['total']} passed max_rel_err={acc['max_rel_err']:.3e} "
-          f"threshold={acc['threshold']}")
+    print(
+        f"[verify] {acc['passed']}/{acc['total']} passed max_rel_err={acc['max_rel_err']:.3e} "
+        f"threshold={acc['threshold']}"
+    )
 
     from cannagent.bench import bench_setup, run_bench
 
@@ -96,24 +101,31 @@ def main() -> int:
         print(json.dumps(r, ensure_ascii=False, default=str))
         return 1
     p50 = r["p50"]
-    print(f"[bench] p50 us: baseline={p50.get('baseline')} optimized={p50.get('optimized')} "
-          f"atc={p50.get('atc')}")
-    print(f"[bench] gain={r['gain_pct']}% gain_ok={r['gain_ok']} "
-          f"validity={r['validity']['valid']} "
-          f"coverage={[e['atc_coverage'] for e in r['validity']['entries']]}")
+    print(
+        f"[bench] p50 us: baseline={p50.get('baseline')} optimized={p50.get('optimized')} "
+        f"atc={p50.get('atc')}"
+    )
+    print(
+        f"[bench] gain={r['gain_pct']}% gain_ok={r['gain_ok']} "
+        f"validity={r['validity']['valid']} "
+        f"coverage={[e['atc_coverage'] for e in r['validity']['entries']]}"
+    )
 
     from cannagent.deliver import package
 
     d = package(rid)
-    print(f"[deliver] check={d['check']} final={d['manifest']['final_version']} "
-          f"gain={d['manifest']['gain_pct']}%")
+    print(
+        f"[deliver] check={d['check']} final={d['manifest']['final_version']} "
+        f"gain={d['manifest']['gain_pct']}%"
+    )
 
     from cannagent.manifest import build as build_manifest
     from cannagent.manifest import render
 
     m = build_manifest(rid)
-    print(f"[manifest] trend={[(t['version'], t['gain_pct']) for t in m['trend']]} "
-          f"stagnation={m['stagnation']}")
+    print(
+        f"[manifest] trend={[(t['version'], t['gain_pct']) for t in m['trend']]} stagnation={m['stagnation']}"
+    )
     (root / "checkpoints" / "cp-e2e.json").write_text(render(m), encoding="utf-8")
 
     print(f"[done] run dir: {root}")

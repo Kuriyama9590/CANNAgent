@@ -73,8 +73,13 @@ def test_unsupported_approach_structured(workspace):
             {
                 "schema_version": "1.0",
                 "candidates": [
-                    {"id": "F001", "pattern": "Conv+BN", "node_idx": [0, 1],
-                     "est_gain_pct": 0.0, "status": "pending"},
+                    {
+                        "id": "F001",
+                        "pattern": "Conv+BN",
+                        "node_idx": [0, 1],
+                        "est_gain_pct": 0.0,
+                        "status": "pending",
+                    },
                 ],
             }
         ),

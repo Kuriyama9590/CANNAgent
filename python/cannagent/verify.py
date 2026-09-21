@@ -145,9 +145,7 @@ def analyze_accuracy(rid: str, version: str | None = None) -> dict[str, Any]:
 # ---- 内部 ----
 
 
-def _assemble(
-    root: Path, version: str, results_json: str, threshold: float, seed: int
-) -> AccuracyReport:
+def _assemble(root: Path, version: str, results_json: str, threshold: float, seed: int) -> AccuracyReport:
     cases = json.loads(results_json)["cases"]
     passed = sum(1 for c in cases if c["pass"] and c["max_rel_err"] <= threshold)
     failures = [

@@ -28,8 +28,12 @@ _DTYPE_RENDER: dict[str, tuple[str, str, int]] = {
 _ERROR_CLASSES: list[tuple[str, str, str, str]] = [
     (r"undefined reference|cannot find -l|No such file .*include", "link", "code_level", "implement"),
     (r"error:|错误：|expected .* at end of input", "compile", "code_level", "implement"),
-    (r"aclnnStatus=\d+|ACL_ERROR|EZ\d+|FATAL: GetWorkspaceSize|FATAL: aclnn execute",
-     "aclnn_api", "api_misuse", "implement"),
+    (
+        r"aclnnStatus=\d+|ACL_ERROR|EZ\d+|FATAL: GetWorkspaceSize|FATAL: aclnn execute",
+        "aclnn_api",
+        "api_misuse",
+        "implement",
+    ),
     (r"atc.*ERROR|unsupported op|not support|op type .* invalid", "atc", "route_infeasible", "strategy"),
     (r"NPU.*busy|CANN_E_NPU_BUSY", "npu_queue", "env", "implement"),
     (r"timeout|timed out|Timeout", "timeout", "env", "implement"),
@@ -156,10 +160,14 @@ def analyze_error(rid: str, version: str | None = None) -> dict[str, Any]:
             return {"class": cls, "kind": kind, "target": target, "evidence": hits, "version": version}
     if log.strip():
         tail = [ln.strip() for ln in log.splitlines() if ln.strip()][-5:]
-        return {"class": "unknown", "kind": "unclassified", "target": "implement",
-                "evidence": tail, "version": version}
-    return {"class": "none", "kind": "none", "target": "implement",
-            "evidence": [], "version": version}
+        return {
+            "class": "unknown",
+            "kind": "unclassified",
+            "target": "implement",
+            "evidence": tail,
+            "version": version,
+        }
+    return {"class": "none", "kind": "none", "target": "implement", "evidence": [], "version": version}
 
 
 # ---- 内部 ----
@@ -208,8 +216,11 @@ def _latest_version(imp: Path) -> str | None:
     """已存在的最大版本号（空目录 → None）。"""
     if not imp.exists():
         return None
-    nums = [int(d.name[1:]) for d in imp.iterdir() if d.is_dir() and d.name.startswith("v")
-            and d.name[1:].isdigit()]
+    nums = [
+        int(d.name[1:])
+        for d in imp.iterdir()
+        if d.is_dir() and d.name.startswith("v") and d.name[1:].isdigit()
+    ]
     return f"v{max(nums)}" if nums else None
 
 

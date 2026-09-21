@@ -46,9 +46,7 @@ def build(rid: str, version: str | None = None) -> dict[str, Any]:
 
 def _compile_snapshot(root: Path, rid: str, version: str, imp: Path) -> dict[str, Any]:
     """算子路线：任务包 = 实现快照 → bash build.sh → 二进制回填 artifacts/。"""
-    files = {
-        str(p.relative_to(imp).as_posix()): p.read_bytes() for p in imp.rglob("*") if p.is_file()
-    }
+    files = {str(p.relative_to(imp).as_posix()): p.read_bytes() for p in imp.rglob("*") if p.is_file()}
     result = RemoteRunner().run_package(
         package=f"{rid}-build-{version}",
         files=files,

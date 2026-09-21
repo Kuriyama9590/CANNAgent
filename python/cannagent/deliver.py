@@ -162,8 +162,7 @@ def package(rid: str) -> dict[str, Any]:
         "gain_pct": gain.get("gain_pct"),
         "checksums": checksums,
     }
-    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2),
-                                       encoding="utf-8")
+    (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
     checked = _check(root)
     return {"manifest": manifest, "check": checked}
@@ -184,20 +183,13 @@ def _check(root: Path) -> dict[str, Any]:
     if not mpath.exists():
         return {"ok": False, "code": "CANN_E_NO_MANIFEST", "message": "deliver/manifest.json 缺失"}
     manifest = json.loads(mpath.read_text(encoding="utf-8"))
-    missing = [
-        k for k in ("code", "tests", "strategy", "report") if not (out / str(manifest[k])).exists()
-    ]
+    missing = [k for k in ("code", "tests", "strategy", "report") if not (out / str(manifest[k])).exists()]
     if missing:
-        return {"ok": False, "code": "CANN_E_DELIVER_INCOMPLETE",
-                "message": f"四件套缺失：{missing}"}
-    bad = [
-        rel for rel, want in manifest.get("checksums", {}).items()
-        if _sha256(out / rel) != want
-    ]
+        return {"ok": False, "code": "CANN_E_DELIVER_INCOMPLETE", "message": f"四件套缺失：{missing}"}
+    bad = [rel for rel, want in manifest.get("checksums", {}).items() if _sha256(out / rel) != want]
     if bad:
         return {"ok": False, "code": "CANN_E_CHECKSUM", "message": f"校验和不一致：{bad}"}
-    return {"ok": True, "final_version": manifest["final_version"],
-            "gain_pct": manifest.get("gain_pct")}
+    return {"ok": True, "final_version": manifest["final_version"], "gain_pct": manifest.get("gain_pct")}
 
 
 def _run_sh(rid: str, final: str) -> str:

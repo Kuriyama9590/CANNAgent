@@ -39,8 +39,9 @@ def bench_setup(rid: str) -> dict[str, Any]:
     }
     root = run_dir(rid)
     (root / "bench").mkdir(exist_ok=True)
-    (root / "bench" / "env.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2),
-                                              encoding="utf-8")
+    (root / "bench" / "env.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return {"env": payload}
 
 
@@ -87,8 +88,11 @@ def run_bench(rid: str, version: str) -> dict[str, Any]:
     from .remote import RemoteRunner
 
     result = RemoteRunner().run_package(
-        package=f"{rid}-bench-{version}", files=files, command=command,
-        expect_outputs=expect, timeout=1200,
+        package=f"{rid}-bench-{version}",
+        files=files,
+        command=command,
+        expect_outputs=expect,
+        timeout=1200,
     )
     (root / "bench" / f"exec_v{version}.log").write_text(result["log"], encoding="utf-8")
     if not result["ok"]:
@@ -125,7 +129,10 @@ def run_bench(rid: str, version: str) -> dict[str, Any]:
     reports = {"baseline": base_report, "optimized": opt_report}
     if atc is not None:
         atc_report = _report(
-            task.baseline.impl, metric, atc, device,
+            task.baseline.impl,
+            metric,
+            atc,
+            device,
             "ATC 编译整图（om_bench，aclmdlExecute）——D4 门槛对照",
         )
         _write_report(root, version, "atc", atc_report)
@@ -310,9 +317,7 @@ def _rerun_pair(rid: str, version: str, metric: BaselineMetric) -> tuple[_Stats,
     """噪声复测（§6）：同口径再来一组，仅报告。失败不阻断主判定。"""
     root = run_dir(rid)
     imp = root / "implement" / version
-    files = {
-        str(p.relative_to(imp).as_posix()): p.read_bytes() for p in imp.rglob("*") if p.is_file()
-    }
+    files = {str(p.relative_to(imp).as_posix()): p.read_bytes() for p in imp.rglob("*") if p.is_file()}
     from .remote import RemoteRunner
 
     try:
@@ -342,13 +347,16 @@ def _rerun_pair(rid: str, version: str, metric: BaselineMetric) -> tuple[_Stats,
 def _write_atc_list(root: Path, version: str, fusion_result: bytes) -> None:
     from .atc_list import parse_fusion_result
 
-    data = parse_fusion_result(fusion_result.decode("utf-8", errors="replace")) if fusion_result else {
-        "passes": []
-    }
+    data = (
+        parse_fusion_result(fusion_result.decode("utf-8", errors="replace"))
+        if fusion_result
+        else {"passes": []}
+    )
     # fusion_result 原始键（effect_times/match_times 等）超出 AtcPass schema——投影到模型字段
     passes = [
-        AtcPass(name=str(p.get("name", "")), scope=str(p.get("scope", "")),
-                applied=bool(p.get("applied", False)))
+        AtcPass(
+            name=str(p.get("name", "")), scope=str(p.get("scope", "")), applied=bool(p.get("applied", False))
+        )
         for p in data["passes"]
     ]
     payload = AtcOptList(

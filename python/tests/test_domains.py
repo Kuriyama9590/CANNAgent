@@ -51,8 +51,13 @@ def rid(workspace: Path) -> str:
             {
                 "schema_version": "1.0",
                 "candidates": [
-                    {"id": "F001", "pattern": "Mul+Add", "node_idx": [0, 1],
-                     "est_gain_pct": 0.0, "status": "pending"},
+                    {
+                        "id": "F001",
+                        "pattern": "Mul+Add",
+                        "node_idx": [0, 1],
+                        "est_gain_pct": 0.0,
+                        "status": "pending",
+                    },
                 ],
             }
         ),
@@ -80,9 +85,9 @@ def test_strategy_generate_selects_and_writes_back(rid: str, workspace: Path):
     for section in ("候选评估", "排序理由", "风险与回退"):
         assert section in doc
     # 候选状态回写（identify 契约）
-    candidates = json.loads(
-        (root / "identify" / "fusion_candidates.json").read_text(encoding="utf-8")
-    )["candidates"]
+    candidates = json.loads((root / "identify" / "fusion_candidates.json").read_text(encoding="utf-8"))[
+        "candidates"
+    ]
     assert candidates[0]["status"] == "selected"
     assert candidates[0]["est_gain_pct"] > 0
 
@@ -99,8 +104,13 @@ def test_strategy_excluded_candidate_rejected(workspace: Path):
             {
                 "schema_version": "1.0",
                 "candidates": [
-                    {"id": "F001", "pattern": "Mul+Add", "node_idx": [0, 1],
-                     "est_gain_pct": 0.0, "status": "pending"},
+                    {
+                        "id": "F001",
+                        "pattern": "Mul+Add",
+                        "node_idx": [0, 1],
+                        "est_gain_pct": 0.0,
+                        "status": "pending",
+                    },
                 ],
             }
         ),
@@ -145,8 +155,13 @@ def test_codegen_unsupported_approach(workspace: Path):
             {
                 "schema_version": "1.0",
                 "candidates": [
-                    {"id": "F001", "pattern": "Conv+BN", "node_idx": [0, 1],
-                     "est_gain_pct": 0.0, "status": "pending"},
+                    {
+                        "id": "F001",
+                        "pattern": "Conv+BN",
+                        "node_idx": [0, 1],
+                        "est_gain_pct": 0.0,
+                        "status": "pending",
+                    },
                 ],
             }
         ),
@@ -225,9 +240,7 @@ def test_verify_assemble_builds_report(rid: str, workspace: Path):
     assert report.total == 2 and report.passed == 1
     assert len(report.failures) == 1 and report.failures[0]["case_id"] == "case_001"
     assert not report.passed_threshold
-    saved = json.loads(
-        (workspace / "runs" / rid / "verify" / "accuracy_v1.json").read_text(encoding="utf-8")
-    )
+    saved = json.loads((workspace / "runs" / rid / "verify" / "accuracy_v1.json").read_text(encoding="utf-8"))
     assert saved["seed"] == 7
 
 
@@ -275,9 +288,7 @@ def test_bench_accuracy_gate(rid: str, workspace: Path):
 def _bench_report(p50: float) -> object:
     from cannagent.task_schema import BenchReport
 
-    return BenchReport(
-        version="v1", impl="aclnn", metric={}, p50_us=p50, device="Ascend910B", note=""
-    )
+    return BenchReport(version="v1", impl="aclnn", metric={}, p50_us=p50, device="Ascend910B", note="")
 
 
 def test_d4_validity_covered_and_not_covered(rid: str, workspace: Path):
@@ -290,9 +301,16 @@ def test_d4_validity_covered_and_not_covered(rid: str, workspace: Path):
             {
                 "schema_version": "1.0",
                 "selected": ["F001"],
-                "tasks": [{"op_task_id": "T-F001", "candidate_id": "F001",
-                           "approach": "aclnn 标量仿射融合（Mul+Add）", "target_gain_pct": 10,
-                           "risk": "low", "order": 1}],
+                "tasks": [
+                    {
+                        "op_task_id": "T-F001",
+                        "candidate_id": "F001",
+                        "approach": "aclnn 标量仿射融合（Mul+Add）",
+                        "target_gain_pct": 10,
+                        "risk": "low",
+                        "order": 1,
+                    }
+                ],
                 "rejected": [],
             }
         ),
@@ -300,27 +318,32 @@ def test_d4_validity_covered_and_not_covered(rid: str, workspace: Path):
     )
     (root / "bench").mkdir(exist_ok=True)
     # 未覆盖：无 atc_opt_list → not_covered 分支
-    validity = _d4_validity(root, "v1", {"optimized": _bench_report(100), "atc": _bench_report(80)},
-                            gain_ok=True)
+    validity = _d4_validity(
+        root, "v1", {"optimized": _bench_report(100), "atc": _bench_report(80)}, gain_ok=True
+    )
     assert validity["entries"][0]["atc_coverage"] == "not_covered" and validity["valid"]
 
     # 已覆盖（pass 名同时含 mul/add）且未强于 ATC → 无效
     (root / "bench" / "atc_opt_list_v1.json").write_text(
         json.dumps(
             {
-                "schema_version": "1.0", "version": "v1", "source": "t",
+                "schema_version": "1.0",
+                "version": "v1",
+                "source": "t",
                 "passes": [{"name": "MulAddFusionPass", "scope": "node:0,1", "applied": True}],
             }
         ),
         encoding="utf-8",
     )
-    validity = _d4_validity(root, "v1", {"optimized": _bench_report(90), "atc": _bench_report(80)},
-                            gain_ok=True)
+    validity = _d4_validity(
+        root, "v1", {"optimized": _bench_report(90), "atc": _bench_report(80)}, gain_ok=True
+    )
     entry = validity["entries"][0]
     assert entry["atc_coverage"] == "covered" and entry["valid"] is False
     # 强于 ATC → 有效
-    validity = _d4_validity(root, "v1", {"optimized": _bench_report(70), "atc": _bench_report(80)},
-                            gain_ok=True)
+    validity = _d4_validity(
+        root, "v1", {"optimized": _bench_report(70), "atc": _bench_report(80)}, gain_ok=True
+    )
     assert validity["entries"][0]["valid"] is True
 
 
@@ -351,9 +374,15 @@ def delivered(rid: str, workspace: Path) -> Path:
         (root / "bench" / f"bench_v1_{kind}.json").write_text(
             json.dumps(
                 {
-                    "schema_version": "1.0", "version": "v1", "impl": "aclnn",
-                    "metric": {"warmup": 20, "iters": 100}, "p50_us": p50, "p99_us": p50 * 1.2,
-                    "mean_us": p50, "device": "Ascend910B", "note": kind,
+                    "schema_version": "1.0",
+                    "version": "v1",
+                    "impl": "aclnn",
+                    "metric": {"warmup": 20, "iters": 100},
+                    "p50_us": p50,
+                    "p99_us": p50 * 1.2,
+                    "mean_us": p50,
+                    "device": "Ascend910B",
+                    "note": kind,
                 }
             ),
             encoding="utf-8",
@@ -361,9 +390,14 @@ def delivered(rid: str, workspace: Path) -> Path:
     (root / "bench" / "gain_v1.json").write_text(
         json.dumps(
             {
-                "schema_version": "1.0", "version": "v1", "gain_pct": 40.0,
-                "target_gain_pct": 10, "epsilon": 0, "gain_ok": True,
-                "p50_baseline_us": 200.0, "p50_optimized_us": 120.0,
+                "schema_version": "1.0",
+                "version": "v1",
+                "gain_pct": 40.0,
+                "target_gain_pct": 10,
+                "epsilon": 0,
+                "gain_ok": True,
+                "p50_baseline_us": 200.0,
+                "p50_optimized_us": 120.0,
             }
         ),
         encoding="utf-8",
@@ -371,9 +405,17 @@ def delivered(rid: str, workspace: Path) -> Path:
     (root / "bench" / "validity_v1.json").write_text(
         json.dumps(
             {
-                "schema_version": "1.0", "version": "v1", "rule": "＞ATC 或 ATC 未覆盖（D4）",
-                "entries": [{"candidate_id": "F001", "atc_coverage": "not_covered",
-                             "valid": True, "reason": "覆盖空白"}],
+                "schema_version": "1.0",
+                "version": "v1",
+                "rule": "＞ATC 或 ATC 未覆盖（D4）",
+                "entries": [
+                    {
+                        "candidate_id": "F001",
+                        "atc_coverage": "not_covered",
+                        "valid": True,
+                        "reason": "覆盖空白",
+                    }
+                ],
                 "valid": True,
             }
         ),
@@ -388,8 +430,16 @@ def test_deliver_report_and_package(delivered: Path):
     report = package(delivered.name)
     out = delivered / "deliver"
     # 四件套
-    for rel in ("code/build.sh", "code/affine_impl.cpp", "tests/cases/index.txt",
-                "STRATEGY.md", "REPORT.md", "run.sh", "bench.sh", "manifest.json"):
+    for rel in (
+        "code/build.sh",
+        "code/affine_impl.cpp",
+        "tests/cases/index.txt",
+        "STRATEGY.md",
+        "REPORT.md",
+        "run.sh",
+        "bench.sh",
+        "manifest.json",
+    ):
         assert (out / rel).exists(), rel
     md = (out / "REPORT.md").read_text(encoding="utf-8")
     for section in ("任务信息", "精度结论", "性能对比", "ATC 优化清单", "复现步骤"):

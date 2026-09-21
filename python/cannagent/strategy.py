@@ -109,9 +109,7 @@ def generate(rid: str) -> dict[str, Any]:
         rejected=rejected,
         fallback="逐算子独立优化（融合候选全部失败时回退官方 aclnn 直调基线）",
     )
-    (root / "strategy" / "strategy.json").write_text(
-        report.model_dump_json(indent=2), encoding="utf-8"
-    )
+    (root / "strategy" / "strategy.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
     _write_doc(root, task, report, by_id, occurrences, len(op_list.get("nodes", [])))
 
     # 回写候选状态（identify 契约：status 由 strategy 阶段回写）
@@ -133,9 +131,7 @@ def _rag_gain(root: Path, task: TaskYaml, pattern: str) -> tuple[list[str], floa
 
         store = KnowledgeStore()
         try:
-            hits = store.retrieve(
-                query=pattern, top_k=3, filter={"dtype": task.constraints.dtype}
-            )
+            hits = store.retrieve(query=pattern, top_k=3, filter={"dtype": task.constraints.dtype})
         finally:
             store.close()
     except Exception:  # noqa: BLE001 —— RAG 缺席不阻断策略（降级为启发式）
