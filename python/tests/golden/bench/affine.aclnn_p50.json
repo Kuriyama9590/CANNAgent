@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "note": "aclnn 仿射基线/优化 p50 固化（benchmark.md §8 官方基线 golden 集）；远程 910B 实测",
+  "captured_at": "2026-09-21",
+  "device": "Ascend910B",
+  "cann": "cann-9.0.0",
+  "metric": { "warmup": 20, "iters": 100 },
+  "shape": [1024, 1024],
+  "dtype": "fp32",
+  "baseline_p50_us": 8.58,
+  "optimized_p50_us": 5.72,
+  "drift_warn_pct": 5.0,
+  "sanity_bound": [0.2, 5.0]
+}
